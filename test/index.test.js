@@ -1,36 +1,36 @@
 const JsonParser = require('../src/index')
 const payload = require('./payload')
 
-test('it throws an error with parameters of wrong type', () => {
+test('it throws an error with context of wrong type', () => {
     expect(() => {
         JsonParser.set(payload, 'this is not an object')
-    }).toThrow('options has to be a JSON object')
+    }).toThrow('context has to be a JSON object')
 
     expect(() => {
         JsonParser.set(payload, [])
-    }).toThrow('options has to be a JSON object')
+    }).toThrow('context has to be a JSON object')
 })
 
-test('it replaces all values in a string', () => {
-    const values = {
+test('it replaces all context values in a string', () => {
+    const context = {
         banana: 'Banana',
         apple: 'Apple'
     }
 
-    const str = JsonParser.set(payload.string, values)
+    const str = JsonParser.set(payload.string, context)
 
     // block #0 - section
     expect(str).toBe('This is a Banana, an Apple and another Banana.')
 })
 
-test('it replaces all values in a JSON array', () => {
-    const values = {
+test('it replaces all context values in a JSON array', () => {
+    const context = {
         banana: 'Banana',
         apple: 'Apple',
         lemon: 'Lemon'
     }
 
-    const array = JsonParser.set(payload.array, values)
+    const array = JsonParser.set(payload.array, context)
 
     // element #0 
     expect(array[0].text).toBe('Lemon')
@@ -42,8 +42,8 @@ test('it replaces all values in a JSON array', () => {
     expect(array[2][0].text).toBe('Lemon')
 })
 
-test('it replaces all values in a JSON object', () => {
-    const values = {
+test('it replaces all context values in a JSON object', () => {
+    const context = {
         channel_id: 'CXXXXXX',
         channel_name: 'general',
         user: 'UXXXXXX',
@@ -53,7 +53,7 @@ test('it replaces all values in a JSON object', () => {
         item_2: 'Item 2'
     }
     
-    const json = JsonParser.set(payload.object, values)
+    const json = JsonParser.set(payload.object, context)
 
     // block #0 - section
     expect(json.text).toBe('Hello UXXXXXX!')
