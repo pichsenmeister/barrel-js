@@ -14,9 +14,9 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "babel-cli": "*",
-    "babel-plugin-transform-object-rest-spread": "*",
-    "babel-preset-env": "*",
-    "jest": "*"
+    "babel-cli": "^7.5.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^7.5.0",
+    "jest": "^24.8.0"
   }
 }
