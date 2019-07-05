@@ -4,19 +4,18 @@
   "description": "A simple template engine for JSON objects and strings",
   "main": "index.js",
   "scripts": {
-    "build": "babel --presets env src -d ./ --ignore src/index.test.js",
-    "dev": "babel --presets env src -d ./ --watch --ignore src/index.test.js",
+    "build": "babel src -d ./ ",
+    "dev": "babel src -d ./ --watch",
     "test": "jest"
   },
   "repository": {},
   "keywords": [],
   "author": "David Pichsenmeister",
   "license": "MIT",
-  "dependencies": {},
   "devDependencies": {
-    "babel-cli": "^7.5.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-preset-env": "^7.5.0",
+    "@babel/cli": "^7.5.0",
+    "@babel/core": "^7.5.0",
+    "@babel/preset-env": "^7.5.0",
     "jest": "^24.8.0"
   }
 }
