@@ -1,10 +1,10 @@
-# json-template
+# barrel-js
 
-A mininmal npm package to build semantic templates for JSON objects and strings.
+A simple & mininmal npm package to build semantic templates for JSON objects and strings.
 
 ## Install
 
-`npm install json-template`
+`npm install barrel-js`
 
 ## Getting started
 
@@ -26,9 +26,9 @@ You can compile this templates in JavaScript by using the `set` function, which 
 To receive the parsed template with its given context, execute the `set` function:
 
 ```javascript
-const JsonTemplate = ('json-template');
+const barrel = ('barrel-js');
 
-let json = JsonTemplate.set(
+let json = barrel.compile(
     {
         "title": "Welcome",
         "body": "Hey {{first_name}}! Great to have you hear."

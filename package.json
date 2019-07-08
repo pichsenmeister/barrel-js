@@ -1,5 +1,5 @@
 {
-  "name": "json-template",
+  "name": "barrel-js",
   "version": "1.0.0",
   "description": "A simple template engine for JSON objects and strings",
   "main": "index.js",

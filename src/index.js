@@ -1,3 +1,14 @@
+/**  wrapper function for set
+ *
+ * this function is reserved for future high level parsing
+ * which should be done prior to the recursive `set` function.
+ * for now, it just calls `set` and returns its results 
+ * 
+ */
+const compile = (payload, context) => {
+    return set(payload, context)
+}
+
 const set = (payload, context) => {
     if(typeof context !== 'object' || Array.isArray(context)) throw new Error('context has to be a JSON object')
 
@@ -27,5 +38,5 @@ const parseStr = (str, context) => {
 } 
 
 module.exports = {
-    set: set
+    compile: compile
 }
