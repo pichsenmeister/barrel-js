@@ -13,7 +13,7 @@ A simple & mininmal npm package to build semantic templates for JSON objects and
 ```json
 {
     "title": "Welcome",
-    "body": "Hey {{first_name}}! Great to have you hear."
+    "body": "Hey {{first_name}}! Great to have you here."
 }
 ```
 
@@ -31,7 +31,7 @@ const barrel = ('barrel-js');
 let json = barrel.compile(
     {
         "title": "Welcome",
-        "body": "Hey {{first_name}}! Great to have you hear."
+        "body": "Hey {{first_name}}! Great to have you here."
     },
     {
         "first_name": "David"
@@ -44,7 +44,7 @@ This will result in following JSON object
 ```json
 {
     "title": "Welcome",
-    "body": "Hey David! Great to have you hear."
+    "body": "Hey David! Great to have you here."
 }
 ```
 

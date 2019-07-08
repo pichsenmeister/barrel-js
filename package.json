@@ -1,6 +1,6 @@
 {
   "name": "barrel-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple template engine for JSON objects and strings",
   "main": "index.js",
   "scripts": {
