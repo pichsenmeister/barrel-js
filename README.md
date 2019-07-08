@@ -19,11 +19,11 @@ A simple & mininmal npm package to build semantic templates for JSON objects and
 
 A template expression is wrapped into `{{` + key + `}}` braces.
 
-You can compile this templates in JavaScript by using the `set` function, which takes two parameters
+You can compile this templates in JavaScript by using the `compile` function, which takes two parameters
 1. the JSON or String template
 2. a context object containing key value pairs of template expressions and values
 
-To receive the parsed template with its given context, execute the `set` function:
+To receive the parsed template with its given context, execute the `compile` function:
 
 ```javascript
 const barrel = ('barrel-js');
