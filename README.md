@@ -8,7 +8,7 @@ A simple & mininmal npm package to build semantic templates for JSON objects and
 
 ## Getting started
 
-`json-template` templates look like regular JSON objects, with embedded template expressions.
+`barrel-js` templates look like regular JSON objects, with embedded template expressions.
 
 ```json
 {
