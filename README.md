@@ -37,7 +37,7 @@ let template = {
 
 let context = {
     "first_name": "David"
-}
+};
 
 let payload = barrel.compile(template, context);
 ```
