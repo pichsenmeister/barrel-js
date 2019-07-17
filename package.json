@@ -1,7 +1,7 @@
 {
   "name": "barrel-js",
-  "version": "1.0.1",
-  "description": "A simple template engine for JSON objects and strings",
+  "version": "1.1.0",
+  "description": "A simple & mininmal template engine to build semantic templates for JSON objects and strings.",
   "main": "index.js",
   "scripts": {
     "build": "babel src -d ./ ",
@@ -10,7 +10,7 @@
   },
   "repository": {},
   "keywords": [],
-  "author": "David Pichsenmeister",
+  "author": "David Pichsenmeister <opensource@pichsenmeister.com>",
   "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.5.0",

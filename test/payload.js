@@ -1,31 +1,31 @@
 module.exports = {
-    string: "This is a {{banana}}, an {{apple}} and another {{banana}}.",
-    array: [
+    "string": "This is a ${banana}, an ${apple} and another banana.",
+    "array": [
         {
-            "text": "{{lemon}}"
+            "text": "${lemon}"
         },
-        "This is a {{banana}}, an {{apple}} and another {{banana}}.",
+        "This is a ${banana}, an ${apple} and another banana.",
         [
             {
-                "text": "{{lemon}}"
+                "text": "${lemon}"
             }
         ]
     ],
-    object: {  
-        "text": "Hello {{user}}!",
+    "object": {  
+        "text": "Hello ${user}!",
         "blocks": [
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "Hey {{user}}! This is a mrkdwn section block, *this is bold*, and ~this is crossed out~, <https://google.com|this is a link, and this is a {{channel_id}}. Thanks for your attention, {{user}}!>"
+                    "text": "Hey ${user}! This is a mrkdwn section block, *this is bold*, and ~this is crossed out~, <https://google.com|this is a link, and this is a ${channel_id}. Thanks for your attention, ${user}!>"
                 }
             },
             {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": "This <{{channel_id}}|{{channel_name}}> has an overflow menu."
+                    "text": "This <${channel_id}|${channel_name}> has an overflow menu."
                 },
                 "accessory": {
                     "type": "overflow",
@@ -33,7 +33,7 @@ module.exports = {
                         {
                             "text": {
                                 "type": "plain_text",
-                                "text": "{{user}}",
+                                "text": "${user}",
                                 "emoji": true
                             },
                             "value": "value-0"
@@ -41,7 +41,7 @@ module.exports = {
                         {
                             "text": {
                                 "type": "plain_text",
-                                "text": "{{channel_id}}",
+                                "text": "${channel_id}",
                                 "emoji": true
                             },
                             "value": "value-1"
@@ -64,7 +64,7 @@ module.exports = {
                         "type": "conversations_select",
                         "placeholder": {
                             "type": "plain_text",
-                            "text": "{{select}} a conversation",
+                            "text": "${select} a conversation",
                             "emoji": true
                         }
                     },
@@ -72,7 +72,7 @@ module.exports = {
                         "type": "channels_select",
                             "placeholder": {
                             "type": "plain_text",
-                            "text": "{{select}} a channel",
+                            "text": "${select} a channel",
                             "emoji": true
                         }
                     },
@@ -80,7 +80,7 @@ module.exports = {
                         "type": "users_select",
                         "placeholder": {
                             "type": "plain_text",
-                            "text": "{{select}} a user",
+                            "text": "${select} a user",
                             "emoji": true
                         }
                     },
@@ -95,7 +95,7 @@ module.exports = {
                             {
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "{{item_0}}",
+                                    "text": "${item_0}",
                                     "emoji": true
                                 },
                                 "value": "value-0"
@@ -103,7 +103,7 @@ module.exports = {
                             {
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "{{item_1}}",
+                                    "text": "${item_1}",
                                     "emoji": true
                                 },
                                 "value": "value-1"
@@ -111,7 +111,7 @@ module.exports = {
                             {
                                 "text": {
                                     "type": "plain_text",
-                                    "text": "{{item_2}}",
+                                    "text": "${item_2}",
                                     "emoji": true
                                 },
                                 "value": "value-2"

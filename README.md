@@ -1,6 +1,6 @@
 # barrel-js
 
-A simple & mininmal npm package to build semantic templates for JSON objects and strings.
+**barrel-js** provides a simple & mininmal npm package to build semantic templates for JSON objects and strings.
 
 ## Install
 
@@ -13,30 +13,33 @@ A simple & mininmal npm package to build semantic templates for JSON objects and
 ```json
 {
     "title": "Welcome",
-    "body": "Hey {{first_name}}! Great to have you here."
+    "body": "Hey ${first_name}! Great to have you here."
 }
 ```
 
-A template expression is wrapped into `{{` + key + `}}` braces.
+A template expression is wrapped into `${` + key + `}` symbols.
 
 You can compile this templates in JavaScript by using the `compile` function, which takes two parameters
 1. the JSON or String template
-2. a context object containing key value pairs of template expressions and values
+2. a context object of template keys and their corresponding values
+
+### Example
 
 To receive the parsed template with its given context, execute the `compile` function:
 
 ```javascript
 const barrel = ('barrel-js');
 
-let json = barrel.compile(
-    {
-        "title": "Welcome",
-        "body": "Hey {{first_name}}! Great to have you here."
-    },
-    {
-        "first_name": "David"
-    }
-);
+let template = {
+    "title": "Welcome",
+    "body": "Hey ${first_name}! Great to have you here."
+};
+
+let context = {
+    "first_name": "David"
+}
+
+let payload = barrel.compile(template, context);
 ```
 
 This will result in following JSON object
@@ -47,6 +50,11 @@ This will result in following JSON object
     "body": "Hey David! Great to have you here."
 }
 ```
+
+### Escaping template expressions
+
+Template expressions can be escaped by using `\\` in front of the expression and the closing `}` symbol. 
+For example `"Hey \\${first_name\\}!"` will result in `"Hey ${first_name}!"`.
 
 ## License
 

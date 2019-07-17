@@ -31,9 +31,13 @@ const set = (payload, context) => {
 const parseStr = (str, context) => {
     let keys = Object.keys(context)
     keys.forEach(key => {
-        let regex = new RegExp(`{{${key}}}`, 'g')
+        let regex = new RegExp(`\\$\{${key}\}`, 'g')
         str = str.replace(regex, context[key])
+
+        let escape = new RegExp(`\\\\\\$\{${key}\\\\\}`, 'g')
+        str = str.replace(escape, `\${${key}}`)
     })
+    
     return str
 } 
 
