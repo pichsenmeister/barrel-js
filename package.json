@@ -8,9 +8,13 @@
     "dev": "babel src -d ./ --watch",
     "test": "jest"
   },
-  "repository": {},
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/pichsenmeister/barrel-js.git"
+  },
   "keywords": [],
   "author": "David Pichsenmeister <opensource@pichsenmeister.com>",
+  "homepage": "https://github.com/pichsenmeister/barrel-js",
   "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.5.0",
