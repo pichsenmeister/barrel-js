@@ -1,6 +1,6 @@
 # barrel-js
 
-**barrel-js** provides a simple & mininmal npm package to build semantic templates for JSON objects and strings.
+**barrel-js** provides a simple & minimal npm package to build semantic templates for JSON objects and strings.
 
 ## Install
 
@@ -28,7 +28,7 @@ You can compile this templates in JavaScript by using the `compile` function, wh
 To receive the parsed template with its given context, execute the `compile` function:
 
 ```javascript
-const barrel = ('barrel-js');
+const barrel = require('barrel-js');
 
 let template = {
     "title": "Welcome",
