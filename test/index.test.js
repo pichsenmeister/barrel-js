@@ -52,7 +52,7 @@ test("it replaces all context values in a JSON object", () => {
         "item_1": "Item 1",
         "item_2": "Item 2"
     }
-    
+
     const json = barrel.compile(payload.object, context)
 
     // block #0 - section
@@ -60,7 +60,7 @@ test("it replaces all context values in a JSON object", () => {
 
     // block #1 - section
     expect(json.blocks[0].text.text).toBe("Hey UXXXXXX! This is a mrkdwn section block, *this is bold*, and ~this is crossed out~, <https://google.com|this is a link, and this is a CXXXXXX. Thanks for your attention, UXXXXXX!>")
-    
+
     // block #1 - accessory
     expect(json.blocks[1].accessory.options[0].text.text).toBe("UXXXXXX")
     expect(json.blocks[1].accessory.options[1].text.text).toBe("CXXXXXX")
@@ -80,10 +80,10 @@ test("it replaces all context values in a JSON object", () => {
 
 })
 
-test("it works with single and double quotation strings", () => { 
+test("it works with single and double quotation strings", () => {
     let context = {
         "name": "Bruce Wayne"
-    }   
+    }
 
     const singleQuoteString = barrel.compile("Hello ${name}!", context)
     expect(singleQuoteString).toBe("Hello Bruce Wayne!")
@@ -93,10 +93,10 @@ test("it works with single and double quotation strings", () => {
 
 })
 
-test("it should properly escape \\${value}", () => { 
+test("it should properly escape \\${value}", () => {
     let context = {
         "name": "Bruce Wayne"
-    }   
+    }
 
     const singleQuoteString = barrel.compile("Hello \\${name\\}!", context)
     expect(singleQuoteString).toBe("Hello ${name}!")
@@ -105,13 +105,33 @@ test("it should properly escape \\${value}", () => {
     expect(doubleQuoteString).toBe("Hello ${name}!")
 })
 
-test("it should not compile template keys with no value", () => { 
+test("it should not compile template keys with no value", () => {
     let context = {
         "name": "Bruce Wayne"
-    }   
+    }
 
     const singleQuoteString = barrel.compile("Hello ${value_does_not_exist}!", context)
     expect(singleQuoteString).toBe("Hello ${value_does_not_exist}!")
 
 })
-  
+
+test("it should not override templates with are passed by reference", () => {
+    let strTemplate = 'This is test #${number}.'
+    let jsonTemplate = {
+        "text": "This is test #${number}."
+    }
+
+    const str0 = barrel.compile(strTemplate, { number: 0 })
+    expect(str0).toBe("This is test #0.")
+
+    const str1 = barrel.compile(strTemplate, { number: 1 })
+    expect(str1).toBe("This is test #1.")
+
+    const json0 = barrel.compile(jsonTemplate, { number: 0 })
+    expect(json0.text).toBe("This is test #0.")
+
+    const json1 = barrel.compile(jsonTemplate, { number: 1 })
+    expect(json1.text).toBe("This is test #1.")
+
+})
+

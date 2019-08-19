@@ -6,11 +6,13 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
  *
  * this function is reserved for future high level parsing
  * which should be done prior to the recursive `set` function.
- * for now, it just calls `set` and returns its results 
  * 
  */
 var compile = function compile(payload, context) {
-  return set(payload, context);
+  // create a deep copy of the payload
+  var copy = payload;
+  if (typeof payload === 'string') copy = payload.repeat(1);else if (_typeof(payload) === 'object') copy = JSON.parse(JSON.stringify(payload));
+  return set(copy, context);
 };
 
 var set = function set(payload, context) {
