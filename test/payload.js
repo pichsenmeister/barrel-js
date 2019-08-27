@@ -11,7 +11,7 @@ module.exports = {
             }
         ]
     ],
-    "object": {  
+    "object": {
         "text": "Hello ${user}!",
         "blocks": [
             {
@@ -70,7 +70,7 @@ module.exports = {
                     },
                     {
                         "type": "channels_select",
-                            "placeholder": {
+                        "placeholder": {
                             "type": "plain_text",
                             "text": "${select} a channel",
                             "emoji": true
@@ -130,5 +130,40 @@ module.exports = {
             }
 
         ]
+    },
+    "get_array": [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "This is a section block."
+            }
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "plain_text",
+                "text": "This is a section block."
+            }
+        }
+    ],
+    "get_object": {
+        "type": "section",
+        "text": {
+            "type": "plain_text",
+            "text": "This is a section block."
+        },
+        "accessory": {
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": "Button",
+                "emoji": true
+            },
+            "value": "click_me_123"
+        }
     }
 }
