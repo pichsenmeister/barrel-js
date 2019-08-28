@@ -200,17 +200,40 @@ test("it should filter all values in a JSON array", () => {
     expect(result[3]).toBe("This is a section block.")
 })
 
-test("it should throw a unsupported payload error if contains payload is not JSON", () => {
-    expect(() => {
-        barrel.contains("string", "filter")
-    }).toThrow("unsupported payload")
+test("it should return true if payload contains element", () => {
+    let result = barrel.contains(payload.get_object, { "type": "section" })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_array, { "type": "section" })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_object, {
+        "text": {
+            "type": "plain_text",
+            "text": "This is a section block."
+        }
+    })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_array, { "type": "section" })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_array, {
+        "text": {
+            "type": "plain_text",
+            "text": "This is a section block."
+        }
+    })
+    expect(result).toBe(true)
 })
 
-test("it should throw a type mismatch error if wrong contains parameters are supplied", () => {
-    expect(() => {
-        barrel.contains({}, "string")
-    }).toThrow("unsupported payload")
-})
+// test("it should return false if payload contains element", () => {
+//     let result = barrel.contains(payload.get_object, { "callback_id": "id" })
+//     expect(result).toBe(false)
+
+//     result = barrel.contains(payload.get_array, { "callback_id": "id" })
+//     expect(result).toBe(false)
+// })
 
 
 

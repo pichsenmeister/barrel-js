@@ -13,7 +13,13 @@ const compile = (payload, context) => {
 }
 
 const contains = (payload, context) => {
-    if (typeof payload !== 'object' || typeof context !== 'object') throw new Error('unsupported payload')
+    if (typeof payload === 'object') payload = JSON.stringify(payload)
+    if (typeof context === 'object') {
+        context = JSON.stringify(context)
+        context = context.trim().slice(1, -1)
+    }
+
+    return payload.indexOf(context) >= 0
 }
 
 const filter = (payload, key, index) => {
@@ -27,10 +33,6 @@ const filter = (payload, key, index) => {
     switch (typeof payload) {
         case 'object':
             results = parseFilter(payload, key, index, results)
-            break
-        case 'string': //TODO no matchAll support in node
-            // let regex = new RegExp(`${key}`, 'g')
-            // results = [...payload.matchAll(regex)]
             break
     }
 
