@@ -77,7 +77,6 @@ test("it replaces all context values in a JSON object", () => {
     expect(json.blocks[2].elements[3].options[1].text.text).toBe("Item 1")
     expect(json.blocks[2].elements[3].options[2].text.text).toBe("Item 2")
     expect(json.blocks[2].elements[3].options[3].text.text).toBe("Static text")
-
 })
 
 test("it works with single and double quotation strings", () => {
@@ -90,7 +89,6 @@ test("it works with single and double quotation strings", () => {
 
     const doubleQuoteString = barrel.compile("Hello ${name}!", context)
     expect(doubleQuoteString).toBe("Hello Bruce Wayne!")
-
 })
 
 test("it should properly escape \\${value}", () => {
@@ -112,7 +110,6 @@ test("it should not compile template keys with no value", () => {
 
     const singleQuoteString = barrel.compile("Hello ${value_does_not_exist}!", context)
     expect(singleQuoteString).toBe("Hello ${value_does_not_exist}!")
-
 })
 
 test("it should not override templates with are passed by reference", () => {
@@ -132,6 +129,120 @@ test("it should not override templates with are passed by reference", () => {
 
     const json1 = barrel.compile(jsonTemplate, { number: 1 })
     expect(json1.text).toBe("This is test #1.")
-
 })
+
+test("it should throw a range error if trying to filter out-of-bounds element", () => {
+    expect(() => {
+        barrel.filter(payload.get_object, "type", 4)
+    }).toThrow("index out of range")
+
+    expect(() => {
+        barrel.filter(payload.get_array, "type", 7)
+    }).toThrow("index out of range")
+})
+
+test("it should throw a unsupported payload error if filter payload is not JSON", () => {
+    expect(() => {
+        barrel.filter("string", "filter")
+    }).toThrow("unsupported payload")
+})
+
+test("it should throw a type mismatch error if wrong filter parameters are supplied", () => {
+    expect(() => {
+        barrel.filter({}, {}, 7)
+    }).toThrow("parameters mismatch")
+
+    expect(() => {
+        barrel.filter({}, "type", "string")
+    }).toThrow("parameters mismatch")
+
+    expect(() => {
+        barrel.filter({}, "type", {})
+    }).toThrow("parameters mismatch")
+})
+
+test("it should filter all values in a JSON object", () => {
+    const result = barrel.filter(payload.get_object, "text")
+
+    // return array should have 4 elements
+    expect(result.length).toBe(4)
+
+    // all of them should have the value "string"
+    expect(JSON.stringify(result[0])).toBe(JSON.stringify({
+        "type": "plain_text",
+        "text": "This is a section block."
+    }))
+    expect(result[1]).toBe("This is a section block.")
+    expect(JSON.stringify(result[2])).toBe(JSON.stringify({
+        "type": "plain_text",
+        "text": "Button",
+        "emoji": true
+    }))
+    expect(result[3]).toBe("Button")
+})
+
+test("it should filter all values in a JSON array", () => {
+    const result = barrel.filter(payload.get_array, "text")
+    console.log(result)
+
+    // return array should have 4 elements
+    expect(result.length).toBe(4)
+
+    // all of them should have the value "string"
+    expect(JSON.stringify(result[0])).toBe(JSON.stringify({
+        "type": "mrkdwn",
+        "text": "This is a section block."
+    }))
+    expect(result[1]).toBe("This is a section block.")
+    expect(JSON.stringify(result[2])).toBe(JSON.stringify({
+        "type": "plain_text",
+        "text": "This is a section block."
+    }))
+    expect(result[3]).toBe("This is a section block.")
+})
+
+test("it should return true if payload contains element", () => {
+    let result = barrel.contains(payload.get_object, { "type": "section" })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_array, { "type": "section" })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_object, {
+        "text": {
+            "type": "plain_text",
+            "text": "This is a section block."
+        }
+    })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_array, { "type": "section" })
+    expect(result).toBe(true)
+
+    result = barrel.contains(payload.get_array, {
+        "text": {
+            "type": "plain_text",
+            "text": "This is a section block."
+        }
+    })
+    expect(result).toBe(true)
+})
+
+test("it should return false if payload is contained only in string", () => {
+    let result = barrel.contains({ "test": "type: section" }, { "type": "section" })
+    expect(result).toBe(false)
+
+    result = barrel.contains({ "test": "\"type\": \"section\"" }, { "type": "section" })
+    expect(result).toBe(false)
+})
+
+// test("it should return false if payload contains element", () => {
+//     let result = barrel.contains(payload.get_object, { "callback_id": "id" })
+//     expect(result).toBe(false)
+
+//     result = barrel.contains(payload.get_array, { "callback_id": "id" })
+//     expect(result).toBe(false)
+// })
+
+
 

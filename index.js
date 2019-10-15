@@ -15,6 +15,35 @@ var compile = function compile(payload, context) {
   return set(copy, context);
 };
 
+var contains = function contains(payload, context) {
+  if (_typeof(payload) === 'object') payload = JSON.stringify(payload);
+
+  if (_typeof(context) === 'object') {
+    context = JSON.stringify(context);
+    context = context.trim().slice(1, -1);
+  }
+
+  return payload.indexOf(context) >= 0;
+};
+
+var filter = function filter(payload, key, index) {
+  if (_typeof(payload) !== 'object') throw new Error('unsupported payload');
+  if (typeof key !== 'string') throw new Error('parameters mismatch');
+  if (typeof index !== 'undefined' && typeof index !== 'number') throw new Error('parameters mismatch');
+  index = index || false;
+  var results = [];
+
+  switch (_typeof(payload)) {
+    case 'object':
+      results = parseFilter(payload, key, index, results);
+      break;
+  }
+
+  if (index !== false && results.length - 1 > index) return results[index];
+  if (index !== false) throw new Error('index out of range');
+  return results;
+};
+
 var set = function set(payload, context) {
   if (_typeof(context) !== 'object' || Array.isArray(context)) throw new Error('context has to be a JSON object');
 
@@ -50,6 +79,29 @@ var parseStr = function parseStr(str, context) {
   return str;
 };
 
+var parseFilter = function parseFilter(payload, key, index, results) {
+  switch (_typeof(payload)) {
+    case 'object':
+      if (Array.isArray(payload)) {
+        payload.map(function (item) {
+          return parseFilter(item, key, index, results);
+        });
+      } else {
+        var jsonKeys = Object.keys(payload);
+        jsonKeys.forEach(function (item) {
+          if (item === key) results.push(payload[item]);
+          if (_typeof(payload[item]) === 'object') parseFilter(payload[item], key, index, results);
+        });
+      }
+
+      break;
+  }
+
+  return results;
+};
+
 module.exports = {
-  compile: compile
+  compile: compile,
+  contains: contains,
+  filter: filter
 };
