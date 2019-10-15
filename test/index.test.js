@@ -183,6 +183,7 @@ test("it should filter all values in a JSON object", () => {
 
 test("it should filter all values in a JSON array", () => {
     const result = barrel.filter(payload.get_array, "text")
+    console.log(result)
 
     // return array should have 4 elements
     expect(result.length).toBe(4)
@@ -225,6 +226,14 @@ test("it should return true if payload contains element", () => {
         }
     })
     expect(result).toBe(true)
+})
+
+test("it should return false if payload is contained only in string", () => {
+    let result = barrel.contains({ "test": "type: section" }, { "type": "section" })
+    expect(result).toBe(false)
+
+    result = barrel.contains({ "test": "\"type\": \"section\"" }, { "type": "section" })
+    expect(result).toBe(false)
 })
 
 // test("it should return false if payload contains element", () => {
