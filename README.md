@@ -64,9 +64,9 @@ This will result in following JSON object
 Template expressions can be escaped by using `\\` in front of the expression and the closing `}` symbol. 
 For example `"Hey \\${first_name\\}!"` will result in `"Hey ${first_name}!"`.
 
-### Filtering JSON
+### Filtering JSON properties
 
-To filter a json payload for specific property, you can use the `filter` function.
+To filter a json payload for specific properties use the `filter` function.
 
 ```javascript
 const barrel = require('barrel-js');
@@ -116,9 +116,9 @@ barrel.filter(payload.get_array, "text", 1);
 
 This will throw an `index out of range` error if the number of found items is lower than the provided max items property.
 
-### Checking for JSON
+### Checking for JSON properties
 
-To check if a specific a json structure exists in this payload, use the `contains` function.
+To check if a specific a json structure exists in this payload use the `contains` function.
 
 ```javascript
 const barrel = require('barrel-js');
