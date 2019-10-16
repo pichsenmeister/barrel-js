@@ -44,6 +44,24 @@ var filter = function filter(payload, key, index) {
   return results;
 };
 
+var match = function match(payload, obj, index) {
+  if (_typeof(payload) !== 'object') throw new Error('unsupported payload');
+  if (_typeof(obj) !== 'object') throw new Error('parameters mismatch');
+  if (typeof index !== 'undefined' && typeof index !== 'number') throw new Error('parameters mismatch');
+  index = index || false;
+  var results = [];
+
+  switch (_typeof(payload)) {
+    case 'object':
+      results = parseMatch(payload, obj, index, results);
+      break;
+  }
+
+  if (index !== false && results.length - 1 > index) return results[index];
+  if (index !== false) throw new Error('index out of range');
+  return results;
+};
+
 var set = function set(payload, context) {
   if (_typeof(context) !== 'object' || Array.isArray(context)) throw new Error('context has to be a JSON object');
 
@@ -100,8 +118,74 @@ var parseFilter = function parseFilter(payload, key, index, results) {
   return results;
 };
 
+var parseMatch = function parseMatch(payload, obj, index, results) {
+  var objKeys = Object.keys(obj);
+
+  switch (_typeof(payload)) {
+    case 'object':
+      if (Array.isArray(payload)) {
+        payload.map(function (item) {
+          return parseMatch(item, obj, index, results);
+        });
+      } else {
+        var jsonKeys = Object.keys(payload);
+        var isSubset = objKeys.filter(function (val) {
+          return jsonKeys.indexOf(val) >= 0;
+        }).length === objKeys.length; // check length if all objKeys are part of this structure and their values are equal
+
+        if (isSubset) {
+          var length = objKeys.filter(function (item) {
+            if (_typeof(obj[item]) !== 'object') {
+              return payload[item] === obj[item];
+            }
+
+            return Object.compare(payload[item], obj[item]);
+          }).length;
+
+          if (isSubset && length === objKeys.length) {
+            results.push(payload);
+          }
+        } // check sub structure as well
+
+
+        jsonKeys.forEach(function (item) {
+          if (_typeof(payload[item]) === 'object') parseMatch(payload[item], obj, index, results);
+        });
+      }
+
+      break;
+  }
+
+  return results;
+};
+
+Object.compare = function (obj1, obj2) {
+  //Loop through properties in object 1
+  for (var p in obj1) {
+    //Check property exists on both objects
+    if (obj1.hasOwnProperty(p) !== obj2.hasOwnProperty(p)) return false;
+
+    switch (_typeof(obj1[p])) {
+      case 'object':
+        if (!Object.compare(obj1[p], obj2[p])) return false;
+        break;
+
+      default:
+        return obj1[p] === obj2[p];
+    }
+  } //Check object 2 for any extra properties
+
+
+  for (var _p in obj2) {
+    if (typeof obj1[_p] === 'undefined') return false;
+  }
+
+  return true;
+};
+
 module.exports = {
   compile: compile,
   contains: contains,
-  filter: filter
+  filter: filter,
+  match: match
 };

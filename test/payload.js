@@ -165,5 +165,41 @@ module.exports = {
             },
             "value": "click_me_123"
         }
+    },
+    "match_object": {
+        "type": "section",
+        "text": {
+            "type": "plain_text",
+            "text": "This is a section block."
+        },
+        "accessory": {
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": "Button",
+                "emoji": true
+            },
+            "value": true
+        },
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Button",
+                    "emoji": true
+                },
+                "value": true
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Button",
+                    "emoji": true
+                },
+                "value": false
+            }
+        ]
     }
 }
