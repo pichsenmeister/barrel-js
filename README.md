@@ -173,7 +173,7 @@ let template = {
     }
 };
 
-let result = barrel.match(template, { "type": "section", "value": true });
+let result = barrel.match(template, { "type": "button", "value": true });
 ```
 
 This will result in following JSON object
