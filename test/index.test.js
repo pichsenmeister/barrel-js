@@ -297,7 +297,7 @@ test("it should match all values in a JSON object", () => {
     const result = barrel.match(payload.match_object, { type: 'button' })
 
     // return array should have 1 elements
-    expect(result.length).toBe(3)
+    expect(result.length).toBe(1)
 
     // all of them should have the value "string"
     expect(JSON.stringify(result[0])).toBe(JSON.stringify({
@@ -309,8 +309,21 @@ test("it should match all values in a JSON object", () => {
         },
         "value": true
     }))
+})
 
-    expect(JSON.stringify(result[1])).toBe(JSON.stringify({
+test("it should match all values in a JSON object", () => {
+    const result = barrel.match(payload.match_object, {
+        text: {
+            type: "plain_text",
+            text: "Button"
+        }
+    })
+
+    // return array should have 1 elements
+    expect(result.length).toBe(1)
+
+    // all of them should have the value "string"
+    expect(JSON.stringify(result[0])).toBe(JSON.stringify({
         "type": "button",
         "text": {
             "type": "plain_text",
@@ -318,16 +331,6 @@ test("it should match all values in a JSON object", () => {
             "emoji": true
         },
         "value": true
-    }))
-
-    expect(JSON.stringify(result[2])).toBe(JSON.stringify({
-        "type": "button",
-        "text": {
-            "type": "plain_text",
-            "text": "Button",
-            "emoji": true
-        },
-        "value": false
     }))
 })
 
@@ -369,14 +372,17 @@ test("it should match all values in a JSON array", () => {
     }))
 })
 
-test("it should match all given values in a JSON object", () => {
+test("it should match all values in a JSON array", () => {
+    const result = barrel.match(payload.match_array, {
+        text: {
+            type: "plain_text",
+            text: "Button"
+        }
+    })
 
-    const result = barrel.match(payload.match_object, { type: 'button', value: true })
+    // return array should have 3 elements
+    expect(result.length).toBe(3)
 
-    // return array should have 1 elements
-    expect(result.length).toBe(2)
-
-    // all of them should have the value "string"
     expect(JSON.stringify(result[0])).toBe(JSON.stringify({
         "type": "button",
         "text": {
@@ -388,6 +394,35 @@ test("it should match all given values in a JSON object", () => {
     }))
 
     expect(JSON.stringify(result[1])).toBe(JSON.stringify({
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
+    }))
+
+    expect(JSON.stringify(result[2])).toBe(JSON.stringify({
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": false
+    }))
+})
+
+test("it should match all given values in a JSON object", () => {
+
+    const result = barrel.match(payload.match_object, { type: 'button', value: true })
+
+    // return array should have 1 elements
+    expect(result.length).toBe(1)
+
+    // all of them should have the value "string"
+    expect(JSON.stringify(result[0])).toBe(JSON.stringify({
         "type": "button",
         "text": {
             "type": "plain_text",

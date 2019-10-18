@@ -169,8 +169,8 @@ module.exports = {
     "match_object": {
         "type": "section",
         "text": {
-            "type": "plain_text",
-            "text": "This is a section block."
+            "type": "mrkdwn",
+            "text": "Some text."
         },
         "accessory": {
             "type": "button",
@@ -180,45 +180,16 @@ module.exports = {
                 "emoji": true
             },
             "value": true
-        },
-        "elements": [
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Button",
-                    "emoji": true
-                },
-                "value": true
-            },
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Button",
-                    "emoji": true
-                },
-                "value": false
-            }
-        ]
+        }
     },
-    "match_array": [{
-        "type": "section",
-        "text": {
-            "type": "plain_text",
-            "text": "This is a section block."
-        },
-        "accessory": {
-            "type": "button",
+    "match_array": [
+        {
+            "type": "section",
             "text": {
-                "type": "plain_text",
-                "text": "Button",
-                "emoji": true
+                "type": "mrkdwn",
+                "text": "Some text."
             },
-            "value": true
-        },
-        "elements": [
-            {
+            "accessory": {
                 "type": "button",
                 "text": {
                     "type": "plain_text",
@@ -226,16 +197,29 @@ module.exports = {
                     "emoji": true
                 },
                 "value": true
-            },
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "Button",
-                    "emoji": true
-                },
-                "value": false
             }
-        ]
-    }]
+        },
+        {
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Button",
+                        "emoji": true
+                    },
+                    "value": true
+                },
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Button",
+                        "emoji": true
+                    },
+                    "value": false
+                }
+            ]
+        }
+    ]
 }
