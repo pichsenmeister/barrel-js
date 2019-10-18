@@ -10,11 +10,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pichsenmeister/barrel-js.git"
+    "url": "https://github.com/pi-venture-lab/barrel-js.git"
   },
   "keywords": [],
   "author": "David Pichsenmeister <opensource@pichsenmeister.com>",
-  "homepage": "https://github.com/pichsenmeister/barrel-js",
+  "homepage": "https://github.com/pi-venture-lab/barrel-js",
   "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.5.0",
