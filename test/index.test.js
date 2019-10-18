@@ -1,7 +1,11 @@
 const barrel = require("../src/index")
 const payload = require("./payload")
 
-// COMPILE tests
+/**
+ * 
+ * compile() tests
+ *  
+ */
 
 test("it throws an error with context of wrong type", () => {
     expect(() => {
@@ -133,17 +137,21 @@ test("it should not override templates with are passed by reference", () => {
     expect(json1.text).toBe("This is test #1.")
 })
 
-// FILTER tests
+/**
+ * 
+ * filter() tests
+ *  
+ */
 
 test("it should throw a range error if trying to filter out-of-bounds element", () => {
     expect(() => {
         // should be 4 results
-        barrel.filter(payload.get_object, "type", 4)
+        barrel.filter(payload.filter_object, "type", 4)
     }).toThrow("index out of range")
 
     expect(() => {
         // should be 5 results
-        barrel.filter(payload.get_array, "type", 7)
+        barrel.filter(payload.filter_array, "type", 7)
     }).toThrow("index out of range")
 })
 
@@ -168,7 +176,7 @@ test("it should throw a type mismatch error if wrong filter parameters are suppl
 })
 
 test("it should filter all values in a JSON object", () => {
-    const result = barrel.filter(payload.get_object, "text")
+    const result = barrel.filter(payload.filter_object, "text")
 
     // return array should have 4 elements
     expect(result.length).toBe(4)
@@ -188,7 +196,7 @@ test("it should filter all values in a JSON object", () => {
 })
 
 test("it should filter all values in a JSON array", () => {
-    const result = barrel.filter(payload.get_array, "text")
+    const result = barrel.filter(payload.filter_array, "text")
 
     // return array should have 4 elements
     expect(result.length).toBe(4)
@@ -206,16 +214,20 @@ test("it should filter all values in a JSON array", () => {
     expect(result[3]).toBe("This is a section block.")
 })
 
-// CONTAINS tests
+/**
+ * 
+ * contains() tests
+ *  
+ */
 
 test("it should return true if payload contains element", () => {
-    let result = barrel.contains(payload.get_object, { "type": "section" })
+    let result = barrel.contains(payload.filter_object, { "type": "section" })
     expect(result).toBe(true)
 
-    result = barrel.contains(payload.get_array, { "type": "section" })
+    result = barrel.contains(payload.filter_array, { "type": "section" })
     expect(result).toBe(true)
 
-    result = barrel.contains(payload.get_object, {
+    result = barrel.contains(payload.filter_object, {
         "text": {
             "type": "plain_text",
             "text": "This is a section block."
@@ -223,10 +235,10 @@ test("it should return true if payload contains element", () => {
     })
     expect(result).toBe(true)
 
-    result = barrel.contains(payload.get_array, { "type": "section" })
+    result = barrel.contains(payload.filter_array, { "type": "section" })
     expect(result).toBe(true)
 
-    result = barrel.contains(payload.get_array, {
+    result = barrel.contains(payload.filter_array, {
         "text": {
             "type": "plain_text",
             "text": "This is a section block."
@@ -243,17 +255,21 @@ test("it should return false if payload is contained only in string", () => {
     expect(result).toBe(false)
 })
 
-// MATCH tests
+/**
+ * 
+ * match() tests
+ *  
+ */
 
 test("it should throw a range error if trying to match out-of-bounds element", () => {
     expect(() => {
         // should be 1 result
-        barrel.match(payload.get_object, { type: 'section' }, 2)
+        barrel.match(payload.match_object, { type: 'section' }, 2)
     }).toThrow("index out of range")
 
     expect(() => {
         // should be 2 results
-        barrel.match(payload.get_array, { type: 'section' }, 3)
+        barrel.match(payload.match_array, { type: 'section' }, 3)
     }).toThrow("index out of range")
 })
 
@@ -278,10 +294,10 @@ test("it should throw a type mismatch error if wrong match parameters are suppli
 })
 
 test("it should match all values in a JSON object", () => {
-    const result = barrel.match(payload.get_object, { type: 'button' })
+    const result = barrel.match(payload.match_object, { type: 'button' })
 
     // return array should have 1 elements
-    expect(result.length).toBe(1)
+    expect(result.length).toBe(3)
 
     // all of them should have the value "string"
     expect(JSON.stringify(result[0])).toBe(JSON.stringify({
@@ -291,7 +307,65 @@ test("it should match all values in a JSON object", () => {
             "text": "Button",
             "emoji": true
         },
-        "value": "click_me_123"
+        "value": true
+    }))
+
+    expect(JSON.stringify(result[1])).toBe(JSON.stringify({
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
+    }))
+
+    expect(JSON.stringify(result[2])).toBe(JSON.stringify({
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": false
+    }))
+})
+
+test("it should match all values in a JSON array", () => {
+    const result = barrel.match(payload.match_array, { type: 'button' })
+
+    // return array should have 1 elements
+    expect(result.length).toBe(3)
+
+    // all of them should have the value "string"
+    expect(JSON.stringify(result[0])).toBe(JSON.stringify({
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
+    }))
+
+    expect(JSON.stringify(result[1])).toBe(JSON.stringify({
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
+    }))
+
+    expect(JSON.stringify(result[2])).toBe(JSON.stringify({
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": false
     }))
 })
 
@@ -324,30 +398,35 @@ test("it should match all given values in a JSON object", () => {
     }))
 })
 
-test("it should match all values in a JSON array", () => {
-    const result = barrel.match(payload.get_array, { type: 'section' })
+test("it should match all given values in a JSON array", () => {
 
-    // return array should have 4 elements
+    const result = barrel.match(payload.match_array, { type: 'button', value: true })
+
+    // return array should have 1 elements
     expect(result.length).toBe(2)
 
     // all of them should have the value "string"
     expect(JSON.stringify(result[0])).toBe(JSON.stringify({
-        "type": "section",
+        "type": "button",
         "text": {
-            "type": "mrkdwn",
-            "text": "This is a section block."
-        }
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
     }))
 
     expect(JSON.stringify(result[1])).toBe(JSON.stringify({
-        "type": "section",
+        "type": "button",
         "text": {
             "type": "plain_text",
-            "text": "This is a section block."
-        }
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
     }))
-
 })
+
 
 
 

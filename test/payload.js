@@ -131,7 +131,7 @@ module.exports = {
 
         ]
     },
-    "get_array": [
+    "filter_array": [
         {
             "type": "section",
             "text": {
@@ -150,7 +150,7 @@ module.exports = {
             }
         }
     ],
-    "get_object": {
+    "filter_object": {
         "type": "section",
         "text": {
             "type": "plain_text",
@@ -201,5 +201,41 @@ module.exports = {
                 "value": false
             }
         ]
-    }
+    },
+    "match_array": [{
+        "type": "section",
+        "text": {
+            "type": "plain_text",
+            "text": "This is a section block."
+        },
+        "accessory": {
+            "type": "button",
+            "text": {
+                "type": "plain_text",
+                "text": "Button",
+                "emoji": true
+            },
+            "value": true
+        },
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Button",
+                    "emoji": true
+                },
+                "value": true
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Button",
+                    "emoji": true
+                },
+                "value": false
+            }
+        ]
+    }]
 }
