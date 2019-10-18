@@ -14,7 +14,8 @@
 
 ## Getting started
 
-### Templates
+### `compile()`
+#### JSON templates
 
 `barrel-js` templates look like regular JSON objects, with embedded template expressions.
 
@@ -64,7 +65,8 @@ This will result in following JSON object
 Template expressions can be escaped by using `\\` in front of the expression and the closing `}` symbol. 
 For example `"Hey \\${first_name\\}!"` will result in `"Hey ${first_name}!"`.
 
-### Filtering JSON properties
+### `filter()`
+#### Filtering JSON properties
 
 To filter a json payload for specific properties use the `filter` function.
 
@@ -116,9 +118,10 @@ barrel.filter(payload.get_array, "text", 1);
 
 This will throw an `index out of range` error if the number of found items is lower than the provided max items property.
 
-### Checking for JSON properties
+### `contains()`
+#### checking for JSON sub-structures
 
-To check if a specific a json structure exists in this payload use the `contains` function.
+To check if a specific json structure exists in this payload use the `contains` function.
 
 ```javascript
 const barrel = require('barrel-js');
@@ -144,6 +147,50 @@ let result = barrel.contains(template, { "type": "section" });
 ```
 
 This will return either `true` or `false`.
+
+### `match()`
+#### filtering for JSON sub-structures
+
+To filter a JSON object or array for a specific json sub-structure use the `match` function.
+
+```javascript
+const barrel = require('barrel-js');
+
+let template = {
+    "type": "section",
+    "text": {
+        "type": "plain_text",
+        "text": "This is a section block."
+    },
+    "accessory": {
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
+    }
+};
+
+let result = barrel.match(template, { "type": "section", "value": true });
+```
+
+This will result in following JSON object
+
+```json
+[ 
+   {
+        "type": "button",
+        "text": {
+            "type": "plain_text",
+            "text": "Button",
+            "emoji": true
+        },
+        "value": true
+    }
+]
+```
 
 ## License
 
