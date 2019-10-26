@@ -6,7 +6,8 @@
   "scripts": {
     "build": "babel src -d ./ ",
     "dev": "babel src -d ./ --watch",
-    "test": "jest"
+    "test": "jest",
+    "start": "nodemon example/index.js"
   },
   "repository": {
     "type": "git",
@@ -16,10 +17,16 @@
   "author": "David Pichsenmeister <opensource@pichsenmeister.com>",
   "homepage": "https://github.com/pi-venture-lab/barrel-js",
   "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.4",
+    "body-parser": "^1.19.0",
+    "request": "^2.88.0"
+  },
   "devDependencies": {
     "@babel/cli": "^7.5.0",
     "@babel/core": "^7.5.0",
     "@babel/preset-env": "^7.5.0",
-    "jest": "^24.8.0"
+    "jest": "^24.8.0",
+    "nodemon": "^1.19.4"
   }
 }
