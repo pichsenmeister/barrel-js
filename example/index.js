@@ -7,16 +7,16 @@ const barrel = new Barrel({
 barrel.registerAll(services)
 //barrel.register('weather', services.weather)
 
-barrel.on({ ok: true }, async ({ context, ack }) => {
+barrel.on('$.city[?(@name===\'london\')]', async ({ context, ack }) => {
     console.log('on test is called', context)
     ack()
 
     barrel.call('weather', {
-        city: 'london'
+        city: context
     })
 })
 
-barrel.on('main', async ({ context }) => {
+barrel.on('$.main.temp', async ({ context }) => {
     console.log('on weather is called', context)
 })
 

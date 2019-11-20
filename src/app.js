@@ -62,9 +62,7 @@ class Barrel {
         if (!(config.hasOwnProperty('json') && config.json === false)) opt.json = true
 
         request(opt, (error, response, body) => {
-            console.log(typeof body)
-            console.log('getting result:', body)
-            this.router({ body: body })
+            this.router({ body: body }, false)
         })
     }
 
@@ -94,18 +92,22 @@ class Barrel {
     }
 
     router (req, res) {
-        let result = store.getListener(req.body)
+        let results = store.getListener(req.body)
 
-        if (result && result.event) {
-            store.emit(result.event, {
-                callback: result.callback,
-                body: req.body,
-                req: req,
-                res: res,
-                context: result
+        if (results && results.length) {
+            results.forEach(result => {
+                store.emit(result.event, {
+                    callback: result.callback,
+                    body: req.body,
+                    req: req,
+                    res: res,
+                    context: result
+                })
             })
+        } else if(res) {
+            return res.status(501).send({ error: 'no matching listener registered' })
         } else {
-            return res.send({ error: 'no matching listener registered' }, 501)
+            return console.error({ error: 'no matching listener registered' })
         }
     }
 

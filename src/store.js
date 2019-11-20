@@ -1,4 +1,5 @@
 const events = require('events')
+const {JSONPath} = require('jsonpath-plus')
 const emitter = new events.EventEmitter()
 
 const { filter } = require('./utils/filter')
@@ -53,34 +54,19 @@ class Store {
     }
 
     getListener (payload) {
-        let tmpListener = {}
-        let hasMatch = this.events.some(listener => {
-            switch (typeof listener.event) {
-                case 'string':
-                    let filters = filter(payload, listener.event)
-                    if (filters.length) {
-                        listener.context = filters[0]
-                        listener.matches = filters
-                        tmpListener = listener
-                        return true
-                    }
-                    return false
-                default:
-                    let matches = match(payload, listener.event)
-                    if (matches.length) {
-                        listener.context = matches[0]
-                        listener.matches = matches
-                        tmpListener = listener
-                        return true
-                    }
-                    return false
+        let matches = this.events.filter(listener => {
+            let context = JSONPath({path: listener.event, json: payload})
+            if(context.length) {
+                listener.context = context.length === 1 && context[0] || context
+                return listener
             }
+            return false
         })
 
         // if there are any results, there can only be one match
-        if (hasMatch) {
-            if (this.debug) console.debug('returning matching listener:', tmpListener)
-            return tmpListener
+        if (matches.length) {
+            if (this.debug) console.debug('returning matching listener:', matches)
+            return matches
         }
         if (this.debug) console.debug('no matching listeners found for:', payload)
         return false
