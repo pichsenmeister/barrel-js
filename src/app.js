@@ -34,8 +34,15 @@ class Barrel {
     }
 
     on (event, callback) {
-        if (this.debug) console.debug('registering event listener:', event)
-        store.addEvent(event, callback)
+        if (this.debug) console.debug('registering request event listener:', event)
+        if (typeof event === 'string' && event.indexOf('$.') !== 0) event = `$..${event}`
+        store.addEvent(event, callback, 'request')
+    }
+
+    onRes (event, callback) {
+        if (this.debug) console.debug('registering response event listener:', event)
+        if (typeof event === 'string' && event.indexOf('$.') !== 0) event = `$..${event}`
+        store.addEvent(event, callback, 'response')
     }
 
     registerAll (services) {
@@ -47,7 +54,7 @@ class Barrel {
         store.addService(serviceId, config)
     }
 
-    call (serviceId, context) {
+    call (serviceId, context, data) {
         let service = store.getService(serviceId)
 
         let config = service(context)
@@ -60,9 +67,11 @@ class Barrel {
         }
 
         if (!(config.hasOwnProperty('json') && config.json === false)) opt.json = true
+        if (config.body) opt.body = config.body(context)
 
         request(opt, (error, response, body) => {
-            this.router({ body: body }, false)
+            // console.log(body)
+            this.response(body, context, data)
         })
     }
 
@@ -92,20 +101,48 @@ class Barrel {
     }
 
     router (req, res) {
-        let results = store.getListener(req.body)
+        // let results = store.getListener(req.body)
 
-        if (results && results.length) {
-            results.forEach(result => {
-                store.emit(result.event, {
-                    callback: result.callback,
-                    body: req.body,
-                    req: req,
-                    res: res,
-                    context: result
-                })
+        let result = store.getListener(req.body, 'request')
+
+        if (result && result.event) {
+            store.emit(result.event, {
+                callback: result.callback,
+                body: req.body,
+                req: req,
+                res: res,
+                context: result.context,
+                matches: result.matches
+
+                // if (results && results.length) {
+                //     results.forEach(result => {
+                //         console.log(res)
+                //         store.emit(result.event, {
+                //             callback: result.callback,
+                //             body: req.body,
+                //             req: req,
+                //             res: res,
+                //             context: result
             })
-        } else if(res) {
+            // })
+        } else {
             return res.status(501).send({ error: 'no matching listener registered' })
+        }
+    }
+
+    response (payload, context, data) {
+        let result = store.getListener(payload, 'response')
+
+        if (result && result.event) {
+            store.emit(result.event, {
+                callback: result.callback,
+                body: payload,
+                context: context,
+                result: result.context,
+                matches: result.matches,
+                data: data
+            })
+
         } else {
             return console.error({ error: 'no matching listener registered' })
         }
