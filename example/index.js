@@ -5,13 +5,13 @@ const barrel = new Barrel({
 })
 
 barrel.registerAll(services)
-//barrel.register('weather', services.weather)
+//barrel.register('weather.search', services.weather.search)
 
 barrel.on('city', async ({ context, ack }) => {
     console.log('on city is called', context)
     ack()
 
-    barrel.call('weatherSearch', {
+    barrel.call('weather.search', {
         city: context
     })
 })
@@ -19,7 +19,7 @@ barrel.on('city', async ({ context, ack }) => {
 barrel.onRes('[0].woeid', async ({ result, context }) => {
     console.log('on woeid is called', context)
 
-    barrel.call('weather', {
+    barrel.call('weather.get', {
         id: result
     }, context)
 })
@@ -27,7 +27,7 @@ barrel.onRes('[0].woeid', async ({ result, context }) => {
 barrel.onRes('consolidated_weather[0].the_temp', async ({ result, data }) => {
     console.log('on weather is called', result)
 
-    barrel.call('slack', {
+    barrel.call('slack.post', {
         city: data.city,
         temperature: result
     })

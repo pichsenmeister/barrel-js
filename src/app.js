@@ -55,10 +55,13 @@ class Barrel {
     }
 
     call (serviceId, context, data) {
-        let service = store.getService(serviceId)
+        let split = false
+        if (serviceId.indexOf('.') > 0) {
+            split = true
+        }
+        let service = store.getService(serviceId.split('.')[0])
 
-        let config = service(context)
-        console.log(config)
+        let config = split ? service[serviceId.split('.')[1]](context) : service(context)
 
         let opt = {
             method: config.method || 'POST',
