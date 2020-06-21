@@ -1,154 +1,135 @@
 
 const express = require('express')
 const bodyParser = require('body-parser')
-const request = require('request')
+const axios = require('axios')
 
-const { compile } = require('./utils/compile')
-const { contains } = require('./utils/contains')
-const { filter } = require('./utils/filter')
-const { match } = require('./utils/match')
-const Store = require('./store.js')
-// store most be global to access in express route callback
-let store
+const Store = require('./store')
+const Scheduler = require('./scheduler')
+const Request = require('./request')
+
+let _self;
 
 class Barrel {
 
     constructor(config) {
         config = config || {}
-        this.port = config.port || 3141
-        this.route = config.route || '/barrel'
-        this.method = config.method || 'POST'
-        this.middleware = config.middleware || false
-        this.debug = config.debug || false
-        this.bodyParser = config.bodyParser || 'all'
+        this.config = {
+            port: config.port || 3141,
+            route: config.route || '/barrel',
+            method: (config.method || 'POST').toLowerCase(),
+            middlewares: config.middlewares || [],
+            bodyParser: config.bodyParser || bodyParser.json(),
+            debug: config.debug || false
+        }
 
         this.app = express()
-        this.compile = compile
-        this.contains = contains
-        this.filter = filter
-        this.match = match
 
-        store = new Store({
-            debug: this.debug
+        this.store = new Store({
+            debug: this.config.debug
         })
+
+        const scheduler = config.scheduler || {}
+
+        if (scheduler.mode === 'http') {
+            scheduler.app = this.app
+            scheduler.port = this.config.port
+            scheduler.method = scheduler.method || this.config.method
+            scheduler.route = scheduler.route || '/schedule'
+        }
+        this.scheduler = new Scheduler(this.store, {
+            debug: this.config.debug,
+            scheduler: scheduler
+        })
+
+        _self = this
     }
 
     on (event, callback) {
         if (this.debug) console.debug('registering request event listener:', event)
-        if (typeof event === 'string' && event.indexOf('$.') !== 0) event = `$..${event}`
-        store.addEvent(event, callback, 'request')
+        this.store.addEvent(event, callback)
     }
 
-    onRes (event, callback) {
-        if (this.debug) console.debug('registering response event listener:', event)
-        if (typeof event === 'string' && event.indexOf('$.') !== 0) event = `$..${event}`
-        store.addEvent(event, callback, 'response')
+    error (callback) {
+        this.errorCallback = callback
+    }
+
+    trigger (body, context) {
+        context = context || {}
+        const listeners = _self.store.getListener(body)
+        if (!listeners.length) {
+            if (context.res) return context.res.status(404).send({ error: 'no matching listener registered' })
+            return false
+        }
+        listeners.forEach(listener => {
+            _self.store.emit(listener.event, {
+                callback: listener.callback,
+                data: listener.data,
+                body: body,
+                context: context,
+            })
+        })
+    }
+
+    schedule (event, timer) {
+        this.store.addScheduler(event, timer)
     }
 
     registerAll (services) {
-        for (let serviceId in services) this.register(serviceId, services[serviceId])
+        services.forEach(service => this.register(service))
     }
 
-    register (serviceId, config) {
-        if (this.debug) console.debug(`registering service ${serviceId}`, config)
-        store.addService(serviceId, config)
+    register (service) {
+        this.store.addService(service)
     }
 
-    call (serviceId, context, data) {
-        let split = false
-        if (serviceId.indexOf('.') > 0) {
-            split = true
+    async call (serviceAction, ...args) {
+        const split = serviceAction.split('.')
+        const serviceId = split[0]
+        const service = this.store.getService(serviceId)
+        const action = service.actions && service.actions[split[1]]
+        const request = service.requests && service.requests[split[1]]
+
+        try {
+            if (action) return action(...args)
+
+            const result = await axios(new Request(service, request, ...args))
+            return result.data
+        } catch (err) {
+            if (this.errorCallback) {
+                this.errorCallback(err.response || err)
+            }
         }
-        let service = store.getService(serviceId.split('.')[0])
 
-        let config = split ? service[serviceId.split('.')[1]](context) : service(context)
-
-        let opt = {
-            method: config.method || 'POST',
-            uri: config.url,
-            headers: config.headers || {}
-        }
-
-        if (!(config.hasOwnProperty('json') && config.json === false)) opt.json = true
-        if (config.body) opt.body = config.body(context)
-
-        request(opt, (error, response, body) => {
-            // console.log(body)
-            this.response(body, context, data)
-        })
     }
 
     start (callback) {
         callback = callback || (() => {
-            console.log(`🛢️ Your barrel is running on http://localhost:${this.port}${this.route}`)
+            console.log(`🛢️ Your barrel is running on http://localhost:${this.config.port}${this.config.route}`)
         })
 
-        // add body parser middleware and barrel middleware
-        if (this.bodyParser === 'json' || this.bodyParser === 'all') {
-            if (this.debug) console.debug('using JSON body parser')
-            this.app.use(bodyParser.json())
-        }
-        if (this.bodyParser === 'urlencoded' || this.bodyParser === 'all') {
-            if (this.debug) console.debug('using urlencoded body parser')
-            this.app.use(bodyParser.urlencoded({ extended: true }))
-        }
-        if (this.middleware) {
-            if (this.debug) console.debug('registering middleware:', this.middleware)
-            this.app.use(this.middleware)
+        this.app.use(this.config.bodyParser)
+
+        if (this.config.middlewares.length) {
+            if (this.config.debug) console.debug('registering middlewares:', this.config.middlewares.length)
+            this.config.middlewares.forEach(middleware => this.app.use(middleware))
         }
         // spin up route listener
-        if (this.debug) console.debug(`spinning up ${this.method.toUpperCase()} route: ${this.route}`)
-        this.app[this.method.toLowerCase()](this.route, this.router)
-        const expressListener = this.app.listen(this.port, callback)
+        if (this.config.debug) console.debug(`spinning up ${this.config.method.toUpperCase()} route: ${this.config.route} `)
+        this.app[this.config.method](this.config.route, this.router)
+
+        const expressListener = this.app.listen(this.config.port, callback)
+        // start scheduler
+        this.scheduler.start()
         return expressListener
     }
 
     router (req, res) {
-        // let results = store.getListener(req.body)
-
-        let result = store.getListener(req.body, 'request')
-
-        if (result && result.event) {
-            store.emit(result.event, {
-                callback: result.callback,
-                body: req.body,
-                req: req,
-                res: res,
-                context: result.context,
-                matches: result.matches
-
-                // if (results && results.length) {
-                //     results.forEach(result => {
-                //         console.log(res)
-                //         store.emit(result.event, {
-                //             callback: result.callback,
-                //             body: req.body,
-                //             req: req,
-                //             res: res,
-                //             context: result
-            })
-            // })
-        } else {
-            return res.status(501).send({ error: 'no matching listener registered' })
-        }
+        const body = _self.config.method === 'get' ? req.query : req.body
+        _self.trigger(body, { req, res })
     }
 
-    response (payload, context, data) {
-        let result = store.getListener(payload, 'response')
-
-        if (result && result.event) {
-            store.emit(result.event, {
-                callback: result.callback,
-                body: payload,
-                context: context,
-                result: result.context,
-                matches: result.matches,
-                data: data
-            })
-
-        } else {
-            return console.error({ error: 'no matching listener registered' })
-        }
+    getStore () {
+        return this.store
     }
 
 }

@@ -1,33 +1,30 @@
 {
-  "name": "barrel-js",
-  "version": "1.2.1",
+  "name": "@barreljs/core",
+  "version": "0.0.1",
   "description": "A simple & minimal template engine to build semantic templates for JSON objects and strings.",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "build": "babel src -d ./ ",
-    "dev": "babel src -d ./ --watch",
-    "test": "jest",
+    "test": "jest test/",
     "start": "nodemon example/index.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pi-venture-lab/barrel-js.git"
+    "url": "https://github.com/pichsenmeister/barrel-js.git"
   },
   "keywords": [],
   "author": "David Pichsenmeister <opensource@pichsenmeister.com>",
-  "homepage": "https://github.com/pi-venture-lab/barrel-js",
+  "homepage": "https://github.com/pichsenmeister/barrel-js",
   "license": "MIT",
   "dependencies": {
+    "@barreljs/json-filter": "^0.0.2",
+    "axios": "^0.19.2",
     "body-parser": "^1.19.0",
-    "express": "^4.16.4",
-    "jsonpath-plus": "^1.1.0",
-    "request": "^2.88.0"
+    "cron-parser": "^2.15.0",
+    "express": "^4.17.1",
+    "jsonpath-plus": "^4.0.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.5.0",
-    "@babel/core": "^7.5.0",
-    "@babel/preset-env": "^7.5.0",
-    "jest": "^24.8.0",
+    "jest": "^26.0.1",
     "nodemon": "^1.19.4"
   }
 }
