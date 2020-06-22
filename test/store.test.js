@@ -20,46 +20,6 @@ test("it should not store duplicate events", () => {
     expect(store.events.length).toBe(2)
 })
 
-test("it should store cron string schedulers", () => {
-    const store = new Store()
-
-    store.addScheduler('test', '* * * * * *')
-    store.addScheduler({ test: 'test' }, '* * * * * *')
-
-    expect(store.getSchedulers().length).toBe(2)
-})
-
-test("it should store cron object schedulers", () => {
-    const store = new Store()
-
-    store.addScheduler('test', { second: 1 })
-    store.addScheduler({ test: 'test' }, { month: 1 })
-
-    expect(store.getSchedulers().length).toBe(2)
-})
-
-test("it should not store duplicate schedulers", () => {
-    const store = new Store()
-
-    store.addScheduler('test', '* * * * * *')
-    store.addScheduler('test', '* * * * * *')
-    store.addScheduler({ test: 'test' }, '* * * * * *')
-    store.addScheduler({ test: 'test' }, '* * * * * *')
-
-    expect(store.getSchedulers().length).toBe(2)
-})
-
-test("it should log an error for invalid schedulers", () => {
-    const store = new Store()
-    const consoleSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => { });
-
-    store.addScheduler('test', 'not valid')
-
-    expect(consoleSpy).toBeCalledTimes(1)
-})
-
 test("it should get the correct listener", () => {
     const store = new Store()
 

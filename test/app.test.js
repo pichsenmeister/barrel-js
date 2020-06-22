@@ -57,29 +57,9 @@ test("it should listen to an event on an incoming request", () => {
 
     barrel.on('test', callback)
 
-    barrel.router({
+    barrel._router({
         body: { test: true }
     })
-
-    expect(callback).toBeCalledTimes(1)
-})
-
-test("it should add a scheduler", () => {
-    const barrel = new Barrel()
-
-    barrel.schedule('test', '* * * * * *')
-
-    expect(barrel.store.getSchedulers().length).toBe(1)
-})
-
-test("it should trigger an event listener from scheduler", () => {
-    const barrel = new Barrel()
-    const callback = jest.fn()
-
-    barrel.on('test', callback)
-
-    barrel.schedule('test', '* * * * * *')
-    barrel.scheduler.run()
 
     expect(callback).toBeCalledTimes(1)
 })
@@ -129,10 +109,9 @@ test("it should trigger error callback on error", async () => {
     const mockService = {
         name: 'test',
         requests: {
-            test: () => ({
-                method: 'get',
-                url: 'test'
-            })
+            test: () => {
+                throw 'exception'
+            }
         }
     }
 

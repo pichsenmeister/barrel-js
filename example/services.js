@@ -6,7 +6,7 @@ module.exports = [
                 method: 'GET',
                 url: 'https://www.metaweather.com/api/location/search',
                 params: {
-                    city: city
+                    query: city
                 }
             }),
             get: (id) => ({
@@ -19,11 +19,11 @@ module.exports = [
     {
         name: 'slack',
         requests: {
-            post: (city, temperature) => ({
+            post: (temperature) => ({
                 method: 'POST',
-                url: `https://hooks.slack.com/services/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`,
+                url: `https://hooks.slack.com/services/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`,
                 data: {
-                    text: `The weather in ${city} is currently ${temperature}°C.`
+                    text: `The temperature is currently ${temperature}°C.`
                 }
             })
         }

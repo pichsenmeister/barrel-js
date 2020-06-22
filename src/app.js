@@ -4,7 +4,6 @@ const bodyParser = require('body-parser')
 const axios = require('axios')
 
 const Store = require('./store')
-const Scheduler = require('./scheduler')
 const Request = require('./request')
 
 let _self;
@@ -28,19 +27,6 @@ class Barrel {
             debug: this.config.debug
         })
 
-        const scheduler = config.scheduler || {}
-
-        if (scheduler.mode === 'http') {
-            scheduler.app = this.app
-            scheduler.port = this.config.port
-            scheduler.method = scheduler.method || this.config.method
-            scheduler.route = scheduler.route || '/schedule'
-        }
-        this.scheduler = new Scheduler(this.store, {
-            debug: this.config.debug,
-            scheduler: scheduler
-        })
-
         _self = this
     }
 
@@ -54,24 +40,24 @@ class Barrel {
     }
 
     trigger (body, context) {
-        context = context || {}
-        const listeners = _self.store.getListener(body)
-        if (!listeners.length) {
-            if (context.res) return context.res.status(404).send({ error: 'no matching listener registered' })
-            return false
-        }
-        listeners.forEach(listener => {
-            _self.store.emit(listener.event, {
-                callback: listener.callback,
-                data: listener.data,
-                body: body,
-                context: context,
+        try {
+            context = context || {}
+            const listeners = _self.store.getListener(body)
+            if (!listeners.length) {
+                if (context.res) return context.res.status(404).send({ error: 'no matching listener registered' })
+                return false
+            }
+            listeners.forEach(listener => {
+                _self.store.emit(listener.event, {
+                    callback: listener.callback,
+                    data: listener.data,
+                    body: body,
+                    context: context,
+                })
             })
-        })
-    }
-
-    schedule (event, timer) {
-        this.store.addScheduler(event, timer)
+        } catch (err) {
+            _self._error(err)
+        }
     }
 
     registerAll (services) {
@@ -83,21 +69,19 @@ class Barrel {
     }
 
     async call (serviceAction, ...args) {
-        const split = serviceAction.split('.')
-        const serviceId = split[0]
-        const service = this.store.getService(serviceId)
-        const action = service.actions && service.actions[split[1]]
-        const request = service.requests && service.requests[split[1]]
-
         try {
-            if (action) return action(...args)
+            const split = serviceAction.split('.')
+            const serviceId = split[0]
+            const service = this.store.getService(serviceId)
+            const action = service.actions && service.actions[split[1]]
+            const request = service.requests && service.requests[split[1]]
+
+            if (action) return await action(...args)
 
             const result = await axios(new Request(service, request, ...args))
             return result.data
         } catch (err) {
-            if (this.errorCallback) {
-                this.errorCallback(err.response || err)
-            }
+            _self._error(err.response && err.response.data || err)
         }
 
     }
@@ -115,21 +99,36 @@ class Barrel {
         }
         // spin up route listener
         if (this.config.debug) console.debug(`spinning up ${this.config.method.toUpperCase()} route: ${this.config.route} `)
-        this.app[this.config.method](this.config.route, this.router)
+        this.app[this.config.method](this.config.route, this._router)
 
         const expressListener = this.app.listen(this.config.port, callback)
-        // start scheduler
-        this.scheduler.start()
         return expressListener
     }
 
-    router (req, res) {
-        const body = _self.config.method === 'get' ? req.query : req.body
-        _self.trigger(body, { req, res })
+    _router (req, res) {
+        _self._executionContext = {
+            req: req,
+            res: res
+        }
+        try {
+            const body = _self.config.method === 'get' ? req.query : req.body
+            _self.trigger(body, { req, res })
+        } catch (err) {
+            _self._error(err)
+        }
     }
 
     getStore () {
         return this.store
+    }
+
+    _error (err) {
+        if (_self.errorCallback) {
+            _self.errorCallback(err)
+        }
+        if (_self._executionContext) {
+            return _self._executionContext.res.status(400).send()
+        }
     }
 
 }

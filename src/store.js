@@ -1,7 +1,6 @@
 const events = require('events')
 const { JSONPath } = require('jsonpath-plus')
 const JSONFilter = require('@barreljs/json-filter')
-const cronParser = require('cron-parser')
 
 class Store {
 
@@ -9,7 +8,6 @@ class Store {
         config = config || {}
         this.debug = config.debug || false
         this.events = []
-        this.schedulers = []
         this.services = {}
         this.emitter = new events.EventEmitter()
     }
@@ -57,35 +55,7 @@ class Store {
         }
     }
 
-    addScheduler (event, timer) {
-        const exists = this.schedulers.some(scheduler => {
-            if (typeof event !== typeof scheduler.event) return false
-            switch (typeof event) {
-                case 'string':
-                    return scheduler.event.toLowerCase() === event.toLowerCase()
-                default:
-                    return JSON.stringify(scheduler.event).toLowerCase() === JSON.stringify(event).toLowerCase()
-            }
-        })
-        if (!exists) {
-            if (typeof timer === 'object') timer = this._parseTimerObject(timer)
-            try {
-                cronParser.parseExpression(timer)
-                if (this.debug) console.debug('registering scheduler in store:', event)
-                this.schedulers.push({
-                    event,
-                    timer
-                })
-            } catch (err) {
-                console.error('Error: ' + err.message);
-                return false
-            }
 
-        }
-        else if (this.debug) {
-            console.debug('can\'t add scheduler to store, scheduler already exists')
-        }
-    }
 
     emit (event, data) {
         if (this.debug) {
@@ -148,41 +118,33 @@ class Store {
         return this.services[serviceId] || false
     }
 
-    getSchedulers () {
-        return this.schedulers
-    }
-
     async _eventListener (context) {
         let opt = {}
-        if (context.body) {
-            opt.body = context.body
-        }
+        opt.body = context.body
+        opt.context = context.context
+
         for (const property in context.data) {
             opt[property] = context.data[property]
         }
-        if (context.req) {
-            opt.req = context.req
+        if (opt.context && opt.context.req) {
+            opt.req = opt.context.req
+            delete opt.context.req
         }
-        if (context.res) {
-            opt.res = context.res
-            opt.ack = context.res.send.bind(context.res)
+        if (opt.context && opt.context.res) {
+            opt.res = opt.context.res
+            opt.ack = opt.context.res.send.bind(opt.context.res)
+            delete opt.context.res
         } else {
             opt.ack = () => { return true }
         }
 
-        return context.callback(opt)
+        try {
+            await context.callback(opt)
+        } catch (err) {
+            if (context.res) context.res.status(400)
+        }
     }
 
-    _parseTimerObject (timer) {
-        return [
-            timer.second || '*',
-            timer.minute || '*',
-            timer.hour || '*',
-            timer.dayOfMonth || '*',
-            timer.month || '*',
-            timer.dayOfWeek || '*',
-        ].join(' ')
-    }
 
 }
 

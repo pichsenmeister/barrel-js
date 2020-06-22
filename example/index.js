@@ -1,7 +1,7 @@
 const Barrel = require('../src/app.js')
 const services = require('./services')
 const barrel = new Barrel({
-    debug: true,
+    debug: false,
     method: 'get',
     scheduler: {
         mode: 'http'
@@ -9,42 +9,28 @@ const barrel = new Barrel({
 })
 
 barrel.registerAll(services)
-//barrel.register('weather.search', services.weather.search)
-barrel.schedule('trigger:ping', '* * * * * *')
 
 barrel.on('city', async ({ firstValue, ack }) => {
     console.log('on city is called', firstValue)
-    const result = await barrel.call('weather.search', {
-        city: firstValue
-    })
+    const result = await barrel.call('weather.search', firstValue)
 
     barrel.trigger(result)
     ack()
 })
 
-barrel.on('[0].woeid', async ({ firstValue, ack }) => {
+barrel.on('[0].woeid', async ({ firstValue, ack, context }) => {
     console.log('on woeid is called', firstValue)
-    const result = await barrel.call('weather.get', {
-        id: firstValue
-    })
+    const result = await barrel.call('weather.get', firstValue)
 
-    barrel.trigger(result)
+    barrel.trigger(result, context)
     ack()
 })
 
-barrel.on('consolidated_weather[0].the_temp', async ({ firstValue, ack }) => {
-    console.log('on weather is called', firstValue)
-    // const result = await barrel.call('slack.post', {
-    //     city: firstValue
-    // })
-
-    // barrel.trigger(result)
+barrel.on('consolidated_weather[0].the_temp', async ({ firstValue, ack, context }) => {
+    await barrel.call('slack.post', firstValue)
     ack()
 })
 
-barrel.on('trigger:ping', async ({ values }) => {
-    console.log(values)
-})
 
 barrel.error((err) => {
     console.error(err)

@@ -1,197 +1,197 @@
-# barrel-js
+# Barrel JS
 
-**barrel-js** is a simple & minimal npm package to build semantic templates for JSON objects and strings.
+Barrel JS is a minimal, event-driven framework for Node to build microservices and integrations.
 
 ## Install
 
 ### NPM
 
-`npm install barrel-js`
+`npm install @barreljs/core`
 
 ### Yarn
 
-`yarn add barrel-js`
+`yarn add @barreljs/core`
 
 ## Getting started
 
-### `compile()`
-#### JSON templates
+```javascript
+const Barrel = require('@barreljs/core')
 
-`barrel-js` templates look like regular JSON objects, with embedded template expressions.
+const barrel = new Barrel()
 
-```json
+barrel.start()
+```
+
+This will spin up a route on `<your-host>:3141/barrel` that accepts valid JSON `POST` requests. You can configure this by passing a [configuration object](#configuration) to the constructor.
+
+To capture incoming requests, you can create listeners that filter the body and execute a given function.
+
+```javascript
+barrel.on({action: "name"}, async ({ values, ack }) => {
+    console.log('values containing action property "name"', values)
+
+    // sends an empty 200 response
+    ack()
+})
+
+barrel.on({action: /^action-\w*$/}, async ({ values, ack }) => {
+    console.log('values containing action property matching the given RegEx', values)
+
+    // sends an empty 200 response
+    ack()
+})
+```
+
+Alternatively you can use any valid [JSONPath Plus](https://github.com/s3u/JSONPath) selector to filter incoming requests.
+
+```javascript
+barrel.on('$..city', async ({ values, ack }) => {
+    console.log('values containing city property', values)
+
+    // sends an empty 200 response
+    ack()
+})
+```
+
+## Services
+
+Services can execute requests or actions. Each service requires a unique `name` property and either an `actions` or `requests` object.
+Requests execute HTTP requests to other services. Actions are just normal funtions that will be executed.
+Each service can contain `requests` and `actions`, but all properties within those two objects must be unique.
+
+```javascript
+const service = {
+        name: 'weather',
+        requests: {
+            search: (city) => ({
+                method: 'GET',
+                url: 'https://www.metaweather.com/api/location/search',
+                params: {
+                    query: city
+                }
+            }),
+            get: (id, city) => ({
+                method: 'POST',
+                url: `https://www.metaweather.com/api/location/${id}`,
+                data: {
+                    city: city
+                }
+            })
+        },
+        actions: {
+            average: (temp1, temp2, temp3) => {
+                return (temp1+temp2+temp3)/3;
+            }
+        }
+
+    }
+```
+
+These services can be registered in a Barrel
+```javascript
+barrel.register(service)
+
+// or if you have multiple services in an array
+barrel.registerAll([service])
+```
+
+and executed using the service's name and action or request identifier
+```javascript
+const result = await barrel.call('weather.search', 'san francisco')
+
+//or
+const average = await barrel.call('weather.average', 67.11, 34.25, 88.91)
+```
+
+
+### Request
+
+Requests are a function that return a valid request object. 
+
+| Property | Type | Required | Description |
+| ---- | ---- | ---- | ---- |
+| `method` | String | Yes | Any valid HTTP method |
+| `url` | String | Yes | A valid url |
+| `params` | JSON | No | An object that is converted into URL parameter |
+| `data` | JSON | No | An object that is converted into a JSON body |
+| `urlencoded` | Boolean | No | Indicates that a request should be send as `application/x-www-form-urlencoded` instead of `application/json` if set to `true` |
+
+### Action
+
+Actions are simple functions wrapped in a service.
+
+## Configuration
+
+The constructor accepts a configuration object with following properties. These are the defaults:
+
+```javascript
 {
-    "title": "Welcome",
-    "body": "Hey ${first_name}! Great to have you here."
+    method: 'POST', // any valid HTTP method
+    port: 3141, // a valid port number
+    route: '/barrel', // the route for incoming requests
+    middlewares: [], // an array of middlewares to run for each incoming request
+    bodyParser: bodyParser.json(), // body-parser
+    debug: false, // true or false
 }
 ```
 
-A template expression is wrapped into `${` + key + `}` symbols.
+## Methods
 
-You can compile this templates in JavaScript by using the `compile` function, which takes two parameters
-1. the JSON or String template
-2. a context object of template keys and their corresponding values
+### `.start()`
 
-#### Example
+Starts the barrel server.
 
-To receive the parsed template with its given context, execute the `compile` function:
+### `.on(filter, callback)`
 
-```javascript
-const barrel = require('barrel-js');
+Creates a listener for incoming requests.
 
-let template = {
-    "title": "Welcome",
-    "body": "Hey ${first_name}! Great to have you here."
-};
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `filter` | JSON or String (JSON Path Plus expression) | The filter to match incoming JSON payloads |
+| `callback` | Function | A function that is executed when an incoming requests matches the filter |
 
-let context = {
-    "first_name": "David"
-};
+### `.error(callback)`
 
-let payload = barrel.compile(template, context);
-```
+Custom error handler
 
-This will result in following JSON object
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `callback` | Function | A function that is executed when an error occurs |
 
-```json
-{
-    "title": "Welcome",
-    "body": "Hey David! Great to have you here."
-}
-```
+### `register(service)`
 
-#### Escaping template expressions
+Registers a valid service object.
 
-Template expressions can be escaped by using `\\` in front of the expression and the closing `}` symbol. 
-For example `"Hey \\${first_name\\}!"` will result in `"Hey ${first_name}!"`.
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `service` | JS Object | A valid service object |
 
-### `filter()`
-#### Filtering JSON properties
+### `registerAll(services)`
 
-To filter a json payload for specific properties use the `filter` function.
+Registers an array of services.
 
-```javascript
-const barrel = require('barrel-js');
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `services` | Array | An array of valid service objects |
 
-let template = {
-    "type": "section",
-    "text": {
-        "type": "plain_text",
-        "text": "This is a section block."
-    },
-    "accessory": {
-        "type": "button",
-        "text": {
-            "type": "plain_text",
-            "text": "Button",
-            "emoji": true
-        },
-        "value": "click_me_123"
-    }
-};
+### `call(action, ..args)`
 
-let result = barrel.filter(payload.get_object, "text")
-```
+Executes a request or action defined in a service object.
 
-This will result in following JSON object
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `action` | String | An action identifier for a service action or request, e.g. `weather.search` |
+| `...args` | Arguments | Any number of arguments passed down to the action or request |
 
-```json
-[ 
-   { 
-      "type":"mrkdwn",
-      "text":"This is a section block."
-   },
-   "This is a section block.",
-   { 
-      "type":"plain_text",
-      "text":"This is a section block."
-   },
-   "This is a section block."
-]
-```
+### `trigger(body, context)`
 
-Use an optional maximum property to reduce the number of returned items. 
+Triggers a matching listener manually.
 
-```javascript
-barrel.filter(payload.get_array, "text", 1);
-```
-
-This will throw an `index out of range` error if the number of found items is lower than the provided max items property.
-
-### `contains()`
-#### checking for JSON sub-structures
-
-To check if a specific json structure exists in this payload use the `contains` function.
-
-```javascript
-const barrel = require('barrel-js');
-
-let template = {
-    "type": "section",
-    "text": {
-        "type": "plain_text",
-        "text": "This is a section block."
-    },
-    "accessory": {
-        "type": "button",
-        "text": {
-            "type": "plain_text",
-            "text": "Button",
-            "emoji": true
-        },
-        "value": "click_me_123"
-    }
-};
-
-let result = barrel.contains(template, { "type": "section" });
-```
-
-This will return either `true` or `false`.
-
-### `match()`
-#### filtering for JSON sub-structures
-
-To filter a JSON object or array for a specific json sub-structure use the `match` function.
-
-```javascript
-const barrel = require('barrel-js');
-
-let template = {
-    "type": "section",
-    "text": {
-        "type": "plain_text",
-        "text": "This is a section block."
-    },
-    "accessory": {
-        "type": "button",
-        "text": {
-            "type": "plain_text",
-            "text": "Button",
-            "emoji": true
-        },
-        "value": true
-    }
-};
-
-let result = barrel.match(template, { "type": "button", "value": true });
-```
-
-This will result in following JSON object
-
-```json
-[ 
-   {
-        "type": "button",
-        "text": {
-            "type": "plain_text",
-            "text": "Button",
-            "emoji": true
-        },
-        "value": true
-    }
-]
-```
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `body` | String or JSON | Matching body that triggers a listener |
+| `context` | JSON | An object that is passed down to the given listener as `context` |
 
 ## License
 
-MIT
+MIT. See [license](LICENSE).
