@@ -30,19 +30,19 @@ class Barrel {
         _self = this
     }
 
-    on (event, callback) {
-        if (this.debug) console.debug('registering request event listener:', event)
-        this.store.addEvent(event, callback)
+    on (pattern, callback) {
+        if (this.debug) console.debug('registering request event listener:', pattern)
+        this.store.addEvent(pattern, callback)
     }
 
     error (callback) {
         this.errorCallback = callback
     }
 
-    trigger (body, context) {
+    dispatch (msg, context) {
         try {
             context = context || {}
-            const listeners = _self.store.getListener(body)
+            const listeners = _self.store.getListener(msg)
             if (!listeners.length) {
                 if (context.res) return context.res.status(404).send({ error: 'no matching listener registered' })
                 return false
@@ -50,8 +50,8 @@ class Barrel {
             listeners.forEach(listener => {
                 _self.store.emit(listener.event, {
                     callback: listener.callback,
-                    data: listener.data,
-                    body: body,
+                    values: listener.values,
+                    message: msg,
                     context: context,
                 })
             })
@@ -60,24 +60,23 @@ class Barrel {
         }
     }
 
-    registerAll (services) {
-        services.forEach(service => this.register(service))
-    }
-
     register (service) {
         this.store.addService(service)
     }
 
-    async call (serviceAction, ...args) {
+    registerAll (services) {
+        services.forEach(service => this.register(service))
+    }
+
+    async execute (serviceAction, ...args) {
         try {
             const split = serviceAction.split('.')
             const serviceId = split[0]
             const service = this.store.getService(serviceId)
             const action = service.actions && service.actions[split[1]]
-            const request = service.requests && service.requests[split[1]]
-
             if (action) return await action(...args)
 
+            const request = service.requests && service.requests[split[1]]
             const result = await axios(new Request(service, request, ...args))
             return result.data
         } catch (err) {
@@ -105,29 +104,42 @@ class Barrel {
         return expressListener
     }
 
+    getStore () {
+        return this.store
+    }
+
     _router (req, res) {
         _self._executionContext = {
             req: req,
             res: res
         }
         try {
-            const body = _self.config.method === 'get' ? req.query : req.body
-            _self.trigger(body, { req, res })
+            const msg = _self._getMessage(req)
+            _self.dispatch(msg, { execution: req, res })
         } catch (err) {
             _self._error(err)
         }
-    }
-
-    getStore () {
-        return this.store
     }
 
     _error (err) {
         if (_self.errorCallback) {
             _self.errorCallback(err)
         }
-        if (_self._executionContext) {
+        if (_self._executionContext && _self._executionContext.res) {
             return _self._executionContext.res.status(400).send()
+        }
+    }
+
+    _getMessage (req) {
+        switch (_self.config.method) {
+            case 'GET':
+            case 'DELETE':
+            case 'TRACE':
+            case 'OPTIONS':
+            case 'HEAD':
+                return req.query || {}
+            default:
+                return req.body || {}
         }
     }
 

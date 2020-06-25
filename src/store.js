@@ -61,7 +61,7 @@ class Store {
         if (this.debug) {
             let debugEvent = typeof event === 'string' && event || JSON.stringify(event)
             console.debug(`emitting event ${debugEvent}:`, {
-                body: data.body
+                message: data.message
             })
         }
         this.emitter.emit(event, data)
@@ -73,75 +73,74 @@ class Store {
             switch (typeof event) {
                 case 'string':
                     if (event === payload) {
-                        listener.data = {
-                            values: [payload],
-                            firstValue: payload,
-                            lastValue: payload
-                        }
+                        listener.values = this._toValueObject([payload])
                         return listener
                     }
                     // fix json-path listener format if necessary
                     if (event.indexOf('$.') !== 0) event = `$..${event}`
                     const strMatches = JSONPath({ path: event, json: payload })
                     if (strMatches.length) {
-                        listener.data = {
-                            values: strMatches,
-                            firstValue: strMatches[0],
-                            lastValue: strMatches[strMatches.length - 1]
-                        }
+                        listener.values = this._toValueObject(strMatches)
                         return listener
                     }
                     return false
                 default:
                     const objMatches = JSONFilter(payload, event)
                     if (objMatches.length) {
-                        listener.data = {
-                            values: objMatches.all(),
-                            firstValue: objMatches.first(),
-                            lastValue: objMatches.last()
-                        }
+                        listener.values = objMatches
                         return listener
                     }
                     return false
             }
         })
 
-        if (listeners.length) {
-            if (this.debug) console.debug('returning matching listener:', listeners.length)
-            return listeners
-        }
-        if (this.debug) console.debug('no matching listeners found for:', payload)
-        return false
+
+        if (this.debug) console.debug('returning matching listener:', listeners.length)
+        return listeners
     }
 
     getService (serviceId) {
         return this.services[serviceId] || false
     }
 
-    async _eventListener (context) {
-        let opt = {}
-        opt.body = context.body
-        opt.context = context.context
+    async _eventListener ({ callback, values, message, context }) {
+        const opt = {
+            message: message || {},
+            context: context || {},
+            values: values
+        }
 
-        for (const property in context.data) {
-            opt[property] = context.data[property]
-        }
-        if (opt.context && opt.context.req) {
-            opt.req = opt.context.req
-            delete opt.context.req
-        }
-        if (opt.context && opt.context.res) {
-            opt.res = opt.context.res
-            opt.ack = opt.context.res.send.bind(opt.context.res)
-            delete opt.context.res
+        if (opt.context.execution && opt.context.execution.res) {
+            const res = opt.context.execution.res
+            opt.done = res.send.bind(res)
         } else {
-            opt.ack = () => { return true }
+            opt.done = () => { }
         }
 
         try {
-            await context.callback(opt)
+            await callback(opt)
         } catch (err) {
-            if (context.res) context.res.status(400)
+            if (this.debug) console.log(err)
+            if (context.execution.res) res.status(400).send()
+
+        }
+    }
+
+    _toValueObject (values) {
+        return {
+            all: () => {
+                return values
+            },
+            first: () => {
+                return values.length ? values[0] : false
+            },
+            last: () => {
+                return values.length ? values[values.length - 1] : false
+            },
+            get: (index) => {
+                return index >= values.length ? false : values[index]
+            },
+            length: values.length
         }
     }
 

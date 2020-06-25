@@ -35,7 +35,7 @@ test("it should not trigger an event listener if there's none", () => {
     const barrel = new Barrel()
     const callback = jest.fn()
 
-    barrel.trigger({ test: true })
+    barrel.dispatch({ test: true })
 
     expect(callback).toBeCalledTimes(0)
 })
@@ -46,7 +46,7 @@ test("it should trigger an event listener", () => {
 
     barrel.on('test', callback)
 
-    barrel.trigger({ test: true })
+    barrel.dispatch({ test: true })
 
     expect(callback).toBeCalledTimes(1)
 })
@@ -76,7 +76,7 @@ test("it should call a service", async () => {
     }
 
     barrel.register(mockService)
-    await barrel.call('test.test')
+    await barrel.execute('test.test')
 
     expect(callback).toBeCalledTimes(1)
 })
@@ -97,7 +97,7 @@ test("it should call a service with the right arguments", async () => {
     }
 
     barrel.register(mockService)
-    await barrel.call('test.test', 1, 2, callback)
+    await barrel.execute('test.test', 1, 2, callback)
 
     expect(callback).toBeCalledTimes(1)
 })
@@ -118,7 +118,7 @@ test("it should trigger error callback on error", async () => {
     barrel.register(mockService)
     barrel.error(callback)
 
-    await barrel.call('test.test')
+    await barrel.execute('test.test')
 
     expect(callback).toBeCalledTimes(1)
 })

@@ -1,6 +1,16 @@
 # Barrel JS
 
+_Note: This is an alpha preview_
+
 Barrel JS is a minimal, event-driven framework for Node to build microservices and integrations.
+
+The goal of the project is to provide a simple way to build integrations with external API services, enabled by an event driven architecture.
+
+These are the principles:
+* **Messages**: Messages are JSON objects. They can have any internal structure you like. Messages can be received via HTTP/S or through internal dispatchers. You just listen and act on messages you care about.
+* **Pattern matching**: Instead of parsing each message or request, you just define which parts of a message you care about.
+* **Service oriented**: You can send messages through services, separating your business logic from message parsing.
+* **Extensibility**: Functionality is expressed as a set of plugins which can be composed together as microservices.
 
 ## Install
 
@@ -24,7 +34,7 @@ barrel.start()
 
 This will spin up a route on `<your-host>:3141/barrel` that accepts valid JSON `POST` requests. You can configure this by passing a [configuration object](#configuration) to the constructor.
 
-To capture incoming requests, you can create listeners that filter the body and execute a given function.
+To capture incoming requests, you can create listeners that filter the body based on the listener's pattern and execute a given function.
 
 ```javascript
 barrel.on({action: "name"}, async ({ values, ack }) => {
@@ -42,7 +52,7 @@ barrel.on({action: /^action-\w*$/}, async ({ values, ack }) => {
 })
 ```
 
-Alternatively you can use any valid [JSONPath Plus](https://github.com/s3u/JSONPath) selector to filter incoming requests.
+Alternatively you can use any valid [JSONPath Plus](https://github.com/s3u/JSONPath) selector as a pattern.
 
 ```javascript
 barrel.on('$..city', async ({ values, ack }) => {
@@ -97,12 +107,11 @@ barrel.registerAll([service])
 
 and executed using the service's name and action or request identifier
 ```javascript
-const result = await barrel.call('weather.search', 'san francisco')
+const result = await barrel.execute('weather.search', 'san francisco')
 
 //or
-const average = await barrel.call('weather.average', 67.11, 34.25, 88.91)
+const average = await barrel.execute('weather.average', 67.11, 34.25, 88.91)
 ```
-
 
 ### Request
 
@@ -141,14 +150,47 @@ The constructor accepts a configuration object with following properties. These 
 
 Starts the barrel server.
 
-### `.on(filter, callback)`
+### `.on(pattern, callback)`
 
 Creates a listener for incoming requests.
 
 | Property | Type |  Description |
 | ---- | ---- | ---- |
-| `filter` | JSON or String (JSON Path Plus expression) | The filter to match incoming JSON payloads |
-| `callback` | Function | A function that is executed when an incoming requests matches the filter |
+| `pattern` | JSON or String (JSON Path Plus expression) | The pattern to match incoming JSON payloads or dispatchers |
+| `callback` | Function | A function that is executed when an incoming requests matches the pattern |
+
+#### callback
+
+The callback function receives an object with following properties:
+
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `values` | Object | A `values` object including the values matching the pattern |
+| `context` | Object | A context object that was passed down from a dispatcher |
+| `message` | Object | The original message |
+| `done` | Function | A function that returns a 200 HTTP response in case that listener was executed in the context of an HTTP request |
+
+#### `values` object
+
+The values object has following properties:
+
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `all()` | Array | Returns an array of all values |
+| `first()` | Object | Returns the first value |
+| `last()` | Object | Returns the last value |
+| `get(index)` | Function | Returns the entry at given index or `false` |
+| `length` | Int | Number of matching values |
+
+
+#### Example
+```javascript
+barrel.on({id: '$any'}, ({values, context, done}) => {
+    console.log(values.all())
+    console.log(context)
+    done()
+})
+```
 
 ### `.error(callback)`
 
@@ -158,13 +200,25 @@ Custom error handler
 | ---- | ---- | ---- |
 | `callback` | Function | A function that is executed when an error occurs |
 
+#### Example
+```javascript
+barrel.error((error) => {
+    console.error(error)
+})
+```
+
 ### `register(service)`
 
 Registers a valid service object.
 
 | Property | Type |  Description |
 | ---- | ---- | ---- |
-| `service` | JS Object | A valid service object |
+| `service` | Object | A valid service object |
+
+#### Example
+```javascript
+barrel.register({... a valid service object ...})
+```
 
 ### `registerAll(services)`
 
@@ -174,7 +228,12 @@ Registers an array of services.
 | ---- | ---- | ---- |
 | `services` | Array | An array of valid service objects |
 
-### `call(action, ..args)`
+#### Example
+```javascript
+barrel.registerAll([{... a valid service object ...}])
+```
+
+### `execute(action, ..args)`
 
 Executes a request or action defined in a service object.
 
@@ -183,14 +242,24 @@ Executes a request or action defined in a service object.
 | `action` | String | An action identifier for a service action or request, e.g. `weather.search` |
 | `...args` | Arguments | Any number of arguments passed down to the action or request |
 
-### `trigger(body, context)`
+#### Example
+```javascript
+barrel.execute('weather.average', 67.11, 34.25, 88.91)
+```
 
-Triggers a matching listener manually.
+### `dispatch(msg, context)`
+
+Dispatches a message object that matches a pattern of a listener.
 
 | Property | Type |  Description |
 | ---- | ---- | ---- |
-| `body` | String or JSON | Matching body that triggers a listener |
+| `msg` | String or JSON | A message object that triggers a listener of a matching pattern |
 | `context` | JSON | An object that is passed down to the given listener as `context` |
+
+#### Example
+```javascript
+barrel.dispatch({action: "name"}, {dispatcher: true})
+```
 
 ## License
 
