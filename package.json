@@ -1,7 +1,7 @@
 {
   "name": "@barreljs/core",
   "version": "0.0.1",
-  "description": "A simple & minimal template engine to build semantic templates for JSON objects and strings.",
+  "description": "Barrel JS is a minimal, event-driven framework for Node to build microservices and integrations.",
   "main": "app.js",
   "scripts": {
     "test": "jest test/",
@@ -19,7 +19,6 @@
     "@barreljs/json-filter": "^0.0.2",
     "axios": "^0.19.2",
     "body-parser": "^1.19.0",
-    "cron-parser": "^2.15.0",
     "express": "^4.17.1",
     "jsonpath-plus": "^4.0.0"
   },
