@@ -68,22 +68,35 @@ class Barrel {
         services.forEach(service => this.register(service))
     }
 
-    async execute (serviceAction, ...args) {
+    async act (serviceAction, ...args) {
         try {
             const split = serviceAction.split('.')
             const serviceId = split[0]
             const service = this.store.getService(serviceId)
             const action = service.actions && service.actions[split[1]]
             if (action) return await action(...args)
+            else if (this.config.debug) console.debug('No action registered for ', serviceAction)
+        } catch (err) {
+            _self._error(err)
+        }
+    }
 
+    async call (serviceRequest, ...args) {
+        try {
+            const split = serviceRequest.split('.')
+            const serviceId = split[0]
+            const service = this.store.getService(serviceId)
             const request = service.requests && service.requests[split[1]]
-            const result = await axios(new Request(service, request, ...args))
-            return result.data
+            if (request) {
+                const result = await axios(new Request(service, request, ...args))
+                return result.data
+            } else if (this.config.debug) console.debug('No request registered for ', serviceRequest)
         } catch (err) {
             _self._error(err.response && err.response.data || err)
         }
-
     }
+
+
 
     start (callback) {
         callback = callback || (() => {

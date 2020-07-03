@@ -64,7 +64,7 @@ test("it should listen to an event on an incoming request", () => {
     expect(callback).toBeCalledTimes(1)
 })
 
-test("it should call a service", async () => {
+test("it should execute a service action", async () => {
     const barrel = new Barrel()
     const callback = jest.fn()
 
@@ -76,12 +76,12 @@ test("it should call a service", async () => {
     }
 
     barrel.register(mockService)
-    await barrel.execute('test.test')
+    await barrel.act('test.test')
 
     expect(callback).toBeCalledTimes(1)
 })
 
-test("it should call a service with the right arguments", async () => {
+test("it should execute a service action with the right arguments", async () => {
     const barrel = new Barrel()
     const callback = jest.fn()
 
@@ -97,7 +97,7 @@ test("it should call a service with the right arguments", async () => {
     }
 
     barrel.register(mockService)
-    await barrel.execute('test.test', 1, 2, callback)
+    await barrel.act('test.test', 1, 2, callback)
 
     expect(callback).toBeCalledTimes(1)
 })
@@ -118,7 +118,7 @@ test("it should trigger error callback on error", async () => {
     barrel.register(mockService)
     barrel.error(callback)
 
-    await barrel.execute('test.test')
+    await barrel.call('test.test')
 
     expect(callback).toBeCalledTimes(1)
 })

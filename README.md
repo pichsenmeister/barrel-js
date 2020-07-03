@@ -10,7 +10,7 @@ These are the principles:
 * **Messages**: Messages are JSON objects. They can have any internal structure you like. Messages can be received via HTTP/S or through internal dispatchers. You just listen and act on messages you care about.
 * **Pattern matching**: Instead of parsing each message or request, you just define which parts of a message you care about.
 * **Service oriented**: You can send messages through services, separating your business logic from message parsing.
-* **Extensibility**: Functionality is expressed as a set of plugins which can be composed together as microservices.
+* **Extensibility**: Functionality is expressed as a set of plugins which can be composed together as microservices. (TBD)
 
 ## Install
 
@@ -41,14 +41,14 @@ barrel.on({action: "name"}, async ({ values, ack }) => {
     console.log('values containing action property "name"', values)
 
     // sends an empty 200 response
-    ack()
+    done()
 })
 
 barrel.on({action: /^action-\w*$/}, async ({ values, ack }) => {
     console.log('values containing action property matching the given RegEx', values)
 
     // sends an empty 200 response
-    ack()
+    done()
 })
 ```
 
@@ -59,7 +59,7 @@ barrel.on('$..city', async ({ values, ack }) => {
     console.log('values containing city property', values)
 
     // sends an empty 200 response
-    ack()
+    done()
 })
 ```
 
@@ -233,18 +233,32 @@ Registers an array of services.
 barrel.registerAll([{... a valid service object ...}])
 ```
 
-### `execute(action, ..args)`
+### `act(action, ..args)`
 
-Executes a request or action defined in a service object.
+Executes an action defined in a service object.
 
 | Property | Type |  Description |
 | ---- | ---- | ---- |
-| `action` | String | An action identifier for a service action or request, e.g. `weather.search` |
+| `action` | String | An action identifier for a service action, e.g. `weather.average` |
 | `...args` | Arguments | Any number of arguments passed down to the action or request |
 
 #### Example
 ```javascript
-barrel.execute('weather.average', 67.11, 34.25, 88.91)
+barrel.act('weather.average', 67.11, 34.25, 88.91)
+```
+
+### `call(request, ..args)`
+
+Executes a request defined in a service object.
+
+| Property | Type |  Description |
+| ---- | ---- | ---- |
+| `request` | String | A request identifier for a service request, e.g. `weather.search` |
+| `...args` | Arguments | Any number of arguments passed down to the action or request |
+
+#### Example
+```javascript
+barrel.call('weather.search', 'san francisco')
 ```
 
 ### `dispatch(msg, context)`
