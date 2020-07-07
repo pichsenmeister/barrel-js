@@ -1,11 +1,10 @@
 {
   "name": "@barreljs/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Barrel JS is a minimal, event-driven framework for Node to build microservices and integrations.",
-  "main": "app.js",
+  "main": "src/app.js",
   "scripts": {
-    "test": "jest test/",
-    "start": "nodemon example/index.js"
+    "test": "jest test/"
   },
   "repository": {
     "type": "git",
