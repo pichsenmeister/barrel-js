@@ -12,6 +12,17 @@ These are the principles:
 * **Service oriented**: You can send messages through services, separating your business logic from message parsing.
 * **Extensibility**: Functionality is expressed as a set of plugins which can be composed together as microservices. (TBD)
 
+## Content
+
+- [Install](#install)
+- [Getting started](#getting-started)
+- [Services](#services)
+- [Example](#example)
+- [Configuration](#configuration)
+- [Methods](#methods)
+- [License](#license)
+
+
 ## Install
 
 ### NPM
@@ -128,6 +139,38 @@ Requests are a function that return a valid request object.
 ### Action
 
 Actions are simple functions wrapped in a service.
+
+
+## Example
+
+You can find an example using the Telegram Bot API [here](examples/telegram.js).
+
+```
+require('dotenv').config()
+
+const Barrel = require('@barreljs/core')
+const telegram = require('@barreljs/telegram')
+
+const barrel = new Barrel()
+barrel.registerAll(telegram.services)
+
+barrel.on(telegram.patterns.message, async ({ values, done }) => {
+    const message = values.first()
+    await barrel.call('telegram.sendMessage', process.env.TOKEN, message.chat.id, message.text)
+    done()
+})
+
+barrel.error((err) => {
+    console.log(err)
+})
+
+barrel.start(async () => {
+    const setup = await barrel.call('telegram.setup', process.env.TOKEN, process.env.WEBHOOK)
+    console.log(setup)
+    const me = await barrel.call('telegram.apiCall', 'getMe', process.env.TOKEN)
+    console.log(me.result)
+})
+```
 
 ## Configuration
 
