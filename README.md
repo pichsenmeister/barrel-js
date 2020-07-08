@@ -48,14 +48,14 @@ This will spin up a route on `<your-host>:3141/barrel` that accepts valid JSON `
 To capture incoming requests, you can create listeners that filter the body based on the listener's pattern and execute a given function.
 
 ```javascript
-barrel.on({action: "name"}, async ({ values, ack }) => {
+barrel.on({action: "name"}, async ({ values, done }) => {
     console.log('values containing action property "name"', values)
 
     // sends an empty 200 response
     done()
 })
 
-barrel.on({action: /^action-\w*$/}, async ({ values, ack }) => {
+barrel.on({action: /^action-\w*$/}, async ({ values, done }) => {
     console.log('values containing action property matching the given RegEx', values)
 
     // sends an empty 200 response
@@ -66,7 +66,7 @@ barrel.on({action: /^action-\w*$/}, async ({ values, ack }) => {
 Alternatively you can use any valid [JSONPath Plus](https://github.com/s3u/JSONPath) selector as a pattern.
 
 ```javascript
-barrel.on('$..city', async ({ values, ack }) => {
+barrel.on('$..city', async ({ values, done }) => {
     console.log('values containing city property', values)
 
     // sends an empty 200 response
