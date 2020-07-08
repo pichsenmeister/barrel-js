@@ -49,14 +49,14 @@ To capture incoming requests, you can create listeners that filter the body base
 
 ```javascript
 barrel.on({action: "name"}, async ({ values, done }) => {
-    console.log('values containing action property "name"', values)
+    console.log('values containing action property "name"', values.all())
 
     // sends an empty 200 response
     done()
 })
 
 barrel.on({action: /^action-\w*$/}, async ({ values, done }) => {
-    console.log('values containing action property matching the given RegEx', values)
+    console.log('values containing action property matching the given RegEx', values.all())
 
     // sends an empty 200 response
     done()
@@ -67,7 +67,7 @@ Alternatively you can use any valid [JSONPath Plus](https://github.com/s3u/JSONP
 
 ```javascript
 barrel.on('$..city', async ({ values, done }) => {
-    console.log('values containing city property', values)
+    console.log('values containing city property', values.all())
 
     // sends an empty 200 response
     done()
