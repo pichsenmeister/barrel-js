@@ -118,10 +118,10 @@ barrel.registerAll([service])
 
 and executed using the service's name and action or request identifier
 ```javascript
-const result = await barrel.execute('weather.search', 'san francisco')
+const result = await barrel.call('weather.search', 'san francisco')
 
 //or
-const average = await barrel.execute('weather.average', 67.11, 34.25, 88.91)
+const average = await barrel.act('weather.average', 67.11, 34.25, 88.91)
 ```
 
 ### Request
