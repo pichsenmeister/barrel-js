@@ -3,3 +3,5 @@ node_modules/
 .DS_Store?
 .vscode
 .vscode/*
+yarn-error.log
+package-lock.json
