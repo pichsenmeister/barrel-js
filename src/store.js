@@ -9,7 +9,42 @@ class Store {
         this.debug = config.debug || false
         this.events = []
         this.services = {}
+        this.plugins = {}
         this.emitter = new events.EventEmitter()
+    }
+
+    addEvent (event, callback) {
+        // check for existing event, we don't allow duplicate events
+        const exists = this.events.some(listener => {
+            // if event listener don't have same types, it's definitely not a match
+            if (typeof event.pattern !== typeof listener.pattern) return false
+            switch (typeof event.pattern) {
+                case 'string':
+                    return listener.pattern.toLowerCase() === event.pattern.toLowerCase()
+                default:
+                    return JSON.stringify(listener.pattern).toLowerCase() === JSON.stringify(event.pattern).toLowerCase()
+            }
+
+        })
+        if (!exists) {
+            const trim = (event.trim === false) ? false : true
+            if (this.debug) console.debug('registering event listener in store:', event)
+            this.events.push({
+                pattern: event.pattern,
+                callback,
+                trim
+            })
+
+            this.emitter.addListener(event.pattern, this._eventListener)
+        } else if (this.debug) {
+            console.debug('can\'t add event listener to store, event listener already exists')
+        }
+    }
+
+    addPlugin (plugin) {
+        if (!plugin.name) throw 'Plugin: plugin name is required'
+        if (!plugin.functions || !Object.keys(plugin.functions).length) throw 'Plugin: plugin functions needs at least one function'
+        this.plugins[plugin.name] = plugin
     }
 
     addService (service) {
@@ -18,77 +53,42 @@ class Store {
         if (service.actions && !Object.keys(service.actions).length) throw 'Store: service actions needs at least one action'
         if (service.requests && !Object.keys(service.requests).length) throw 'Store: service requests needs at least one request'
 
-        if (service.actions && service.requests) {
-            const actions = Object.keys(service.actions)
-            Object.keys(service.requests).forEach(request => {
-                if (actions.indexOf(request) >= 0) throw `Store: conflicting keys in requests and actions for service ${service.name}`
-            })
-        }
-
         if (this.debug) console.debug(`registering service ${service.name} in store`)
         this.services[service.name] = service
     }
 
-    addEvent (event, callback) {
-        // check for existing event, we don't allow duplicate events
-        const exists = this.events.some(listener => {
-            // if event listener don't have same types, it's definitely not a match
-            if (typeof event !== typeof listener.event) return false
-            switch (typeof event) {
-                case 'string':
-                    return listener.event.toLowerCase() === event.toLowerCase()
-                default:
-                    return JSON.stringify(listener.event).toLowerCase() === JSON.stringify(event).toLowerCase()
-            }
-
-        })
-        if (!exists) {
-            if (this.debug) console.debug('registering event listener in store:', event)
-            this.events.push({
-                event,
-                callback
-            })
-
-            this.emitter.addListener(event, this._eventListener)
-        } else if (this.debug) {
-            console.debug('can\'t add event listener to store, event listener already exists')
-        }
-    }
-
-
-
-    emit (event, data) {
+    emit (pattern, data) {
         if (this.debug) {
-            let debugEvent = typeof event === 'string' && event || JSON.stringify(event)
+            let debugEvent = typeof pattern === 'string' && pattern || JSON.stringify(pattern)
             console.debug(`emitting event ${debugEvent}:`, {
                 message: data.message
             })
         }
-        this.emitter.emit(event, data)
+        this.emitter.emit(pattern, data)
     }
 
     getListener (payload) {
-        const listeners = this.events.filter(listener => {
-            let event = listener.event
-            switch (typeof event) {
+        const listeners = this.events.filter(event => {
+            let pattern = event.pattern
+            switch (typeof pattern) {
                 case 'string':
-                    if (event === payload) {
-                        listener.values = this._toValueObject([payload])
-                        return listener
+                    if (pattern === payload) {
+                        event.values = this._toValueObject([payload])
+                        return event
                     }
                     // fix json-path listener format if necessary
-                    if (event.indexOf('$.') !== 0) event = `$..${event}`
-                    const strMatches = JSONPath({ path: event, json: payload })
+                    if (pattern.indexOf('$.') !== 0) pattern = `$..${pattern}`
+                    const strMatches = JSONPath({ path: pattern, json: payload })
                     if (strMatches.length) {
-                        listener.values = this._toValueObject(strMatches)
-                        return listener
+                        event.values = this._toValueObject(strMatches)
+                        return event
                     }
                     return false
                 default:
-                    const objMatches = JSONFilter(payload, event)
+                    const objMatches = JSONFilter(payload, pattern, event.trim)
                     if (objMatches.length) {
-                        listener.values = objMatches
-                        return listener
+                        event.values = objMatches
+                        return event
                     }
                     return false
             }
@@ -97,6 +97,10 @@ class Store {
 
         if (this.debug) console.debug('returning matching listener:', listeners.length)
         return listeners
+    }
+
+    getPlugin (pluginId) {
+        return this.plugins[pluginId] || false
     }
 
     getService (serviceId) {
@@ -120,8 +124,8 @@ class Store {
         try {
             await callback(opt)
         } catch (err) {
-            if (this.debug) console.log(err)
-            if (context.execution.res) res.status(400).send()
+            if (this.debug) console.error(err)
+            if (context.execution.res) context.execution.res.status(400).send()
 
         }
     }

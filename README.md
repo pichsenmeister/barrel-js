@@ -43,7 +43,7 @@ const barrel = new Barrel()
 barrel.start()
 ```
 
-This will spin up a route on `<your-host>:3141/barrel` that accepts valid JSON `POST` requests. You can configure this by passing a [configuration object](#configuration) to the constructor.
+This will spin up a route on `<your-host>:5000/barrel` that accepts valid JSON `POST` requests. You can configure this by passing a [configuration object](#configuration) to the constructor.
 
 To capture incoming requests, you can create listeners that filter the body based on the listener's pattern and execute a given function.
 
@@ -179,7 +179,7 @@ The constructor accepts a configuration object with following properties. These 
 ```javascript
 {
     method: 'POST', // any valid HTTP method
-    port: 3141, // a valid port number
+    port: 5000, // a valid port number
     route: '/barrel', // the route for incoming requests
     middlewares: [], // an array of middlewares to run for each incoming request
     bodyParser: bodyParser.json(), // body-parser

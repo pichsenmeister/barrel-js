@@ -4,7 +4,7 @@ const bodyParser = require('body-parser')
 test("it should use default config", () => {
     const barrel = new Barrel()
 
-    expect(barrel.config.port).toBe(3141)
+    expect(barrel.config.port).toBe(5000)
     expect(barrel.config.route).toBe('/barrel')
     expect(barrel.config.method).toBe('post')
     expect(barrel.config.middlewares.length).toBe(0)
@@ -15,14 +15,14 @@ test("it should use default config", () => {
 
 test("it should apply given config", () => {
     const barrel = new Barrel({
-        port: 1772,
+        port: 3000,
         route: '/test',
         method: 'GET',
         debug: true,
         bodyParser: bodyParser.urlencoded({ extended: false })
     })
 
-    expect(barrel.config.port).toBe(1772)
+    expect(barrel.config.port).toBe(3000)
     expect(barrel.config.route).toBe('/test')
     expect(barrel.config.method).toBe('get')
     expect(barrel.config.middlewares.length).toBe(0)
@@ -98,6 +98,23 @@ test("it should execute a service action with the right arguments", async () => 
 
     barrel.register(mockService)
     await barrel.act('test.test', 1, 2, callback)
+
+    expect(callback).toBeCalledTimes(1)
+})
+
+test("it should add a plugin's function", async () => {
+    const barrel = new Barrel()
+    const callback = jest.fn()
+
+    const mockPlugin = {
+        name: 'plugin',
+        functions: {
+            test: callback
+        }
+    }
+
+    barrel.plugin(mockPlugin)
+    await barrel.test()
 
     expect(callback).toBeCalledTimes(1)
 })

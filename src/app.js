@@ -13,15 +13,17 @@ class Barrel {
     constructor(config) {
         config = config || {}
         this.config = {
-            port: config.port || 3141,
+            port: config.port || 5000,
             route: config.route || '/barrel',
             method: (config.method || 'POST').toLowerCase(),
             middlewares: config.middlewares || [],
             bodyParser: config.bodyParser || bodyParser.json(),
-            debug: config.debug || false
+            debug: config.debug || false,
         }
 
         this.app = express()
+        this.router = express.Router()
+        this.app.use('/', this.router)
 
         this.store = new Store({
             debug: this.config.debug
@@ -30,9 +32,9 @@ class Barrel {
         _self = this
     }
 
-    on (pattern, callback) {
+    on (pattern, callback, trim) {
         if (this.debug) console.debug('registering request event listener:', pattern)
-        this.store.addEvent(pattern, callback)
+        this.store.addEvent({ pattern, trim }, callback)
     }
 
     error (callback) {
@@ -48,7 +50,7 @@ class Barrel {
                 return false
             }
             listeners.forEach(listener => {
-                _self.store.emit(listener.event, {
+                _self.store.emit(listener.pattern, {
                     callback: listener.callback,
                     values: listener.values,
                     message: msg,
@@ -58,6 +60,13 @@ class Barrel {
         } catch (err) {
             _self._error(err)
         }
+    }
+
+    plugin (plugin) {
+        this.store.addPlugin(plugin)
+        Object.entries(plugin.functions).map(([key, value]) => {
+            this[key] = value
+        })
     }
 
     register (service) {
@@ -96,11 +105,9 @@ class Barrel {
         }
     }
 
-
-
     start (callback) {
         callback = callback || (() => {
-            console.log(`🛢️ Your barrel is running on http://localhost:${this.config.port}${this.config.route}`)
+            console.log(`🛢️ Your barrel is running on ${this.config.method.toUpperCase()} <host>:${this.config.port}${this.config.route}`)
         })
 
         this.app.use(this.config.bodyParser)
@@ -111,14 +118,18 @@ class Barrel {
         }
         // spin up route listener
         if (this.config.debug) console.debug(`spinning up ${this.config.method.toUpperCase()} route: ${this.config.route} `)
-        this.app[this.config.method](this.config.route, this._router)
+        this.router[this.config.method](this.config.route, this._router)
 
-        const expressListener = this.app.listen(this.config.port, callback)
-        return expressListener
+        this.app.listen(this.config.port, callback)
+        return this.app
     }
 
     getStore () {
         return this.store
+    }
+
+    getRouter () {
+        return this.router
     }
 
     _router (req, res) {

@@ -3,8 +3,8 @@ const Store = require("../src/store")
 test("it should store events", () => {
     const store = new Store()
 
-    store.addEvent('test', () => { })
-    store.addEvent({ test: 'test' }, () => { })
+    store.addEvent({ pattern: 'test' }, () => { })
+    store.addEvent({ pattern: { test: 'test' } }, () => { })
 
     expect(store.events.length).toBe(2)
 })
@@ -12,19 +12,37 @@ test("it should store events", () => {
 test("it should not store duplicate events", () => {
     const store = new Store()
 
-    store.addEvent('test', () => { })
-    store.addEvent('test', () => { })
-    store.addEvent({ test: 'test' }, () => { })
-    store.addEvent({ test: 'test' }, () => { })
+    store.addEvent({ pattern: 'test' }, () => { })
+    store.addEvent({ pattern: 'test' }, () => { })
+    store.addEvent({ pattern: { test: 'test' } }, () => { })
+    store.addEvent({ pattern: { test: 'test' } }, () => { })
 
     expect(store.events.length).toBe(2)
+})
+
+test("it should set trim to true for events by default", () => {
+    const store = new Store()
+
+    store.addEvent({ pattern: 'test' }, () => { })
+
+    expect(store.events.length).toBe(1)
+    expect(store.events[0].trim).toBe(true)
+})
+
+test("it should set trim to false if set for events", () => {
+    const store = new Store()
+
+    store.addEvent({ pattern: 'test', trim: false }, () => { })
+
+    expect(store.events.length).toBe(1)
+    expect(store.events[0].trim).toBe(false)
 })
 
 test("it should get the correct listener", () => {
     const store = new Store()
 
-    store.addEvent('test', () => { })
-    store.addEvent({ test: 'test' }, () => { })
+    store.addEvent({ pattern: 'test' }, () => { })
+    store.addEvent({ pattern: { test: 'test' } }, () => { })
 
     const listeners = store.getListener({ payload: { test: 'test' } })
 
@@ -35,15 +53,15 @@ test("it should call callback fn on emit", () => {
     const store = new Store()
     const callback = jest.fn()
 
-    store.addEvent('test', callback)
+    store.addEvent({ pattern: 'test' }, callback)
     const listeners = store.getListener({ payload: { test: 'test' } })
 
     expect(listeners.length).toBe(1)
 
-    listeners.forEach(listener => {
-        store.emit(listener.event, {
-            callback: listener.callback,
-            values: listener.values,
+    listeners.forEach(event => {
+        store.emit(event.pattern, {
+            callback: event.callback,
+            values: event.values,
         })
     })
 
@@ -68,10 +86,6 @@ test("it should throw an error if a service is malformed", () => {
     expect(() => {
         store.addService({ name: 'test', requests: {} })
     }).toThrow('Store: service requests needs at least one request')
-
-    expect(() => {
-        store.addService({ name: 'test', requests: { test: {} }, actions: { test: {} } })
-    }).toThrow('Store: conflicting keys in requests and actions for service test')
 })
 
 test("it should register a service", () => {
@@ -101,4 +115,49 @@ test("it should get a registered service", () => {
     const service = store.getService('test')
 
     expect(service.name).toBe('test')
+})
+
+test("it should throw an error if a plugin is malformed", () => {
+    const store = new Store()
+
+    expect(() => {
+        store.addPlugin({})
+    }).toThrow('Plugin: plugin name is required')
+
+    expect(() => {
+        store.addPlugin({ name: 'test' })
+    }).toThrow('Plugin: plugin functions needs at least one function')
+
+    expect(() => {
+        store.addPlugin({ name: 'test', functions: {} })
+    }).toThrow('Plugin: plugin functions needs at least one function')
+})
+
+test("it should register a plugin", () => {
+    const store = new Store()
+    const mockPlugin = {
+        name: 'plugin',
+        functions: {
+            test: () => { },
+        }
+    }
+
+    store.addPlugin(mockPlugin)
+
+    expect(Object.keys(store.plugins).length).toBe(1)
+})
+
+test("it should get a registered plugin", () => {
+    const store = new Store()
+    const mockPlugin = {
+        name: 'plugin',
+        functions: {
+            test: () => { },
+        }
+    }
+
+    store.addPlugin(mockPlugin)
+    const plugin = store.getPlugin('plugin')
+
+    expect(plugin.name).toBe('plugin')
 })
