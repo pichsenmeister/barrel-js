@@ -22,3 +22,14 @@ barrel.start(async () => {
     const me = await barrel.call('telegram.apiCall', 'getMe', process.env.TOKEN)
     console.log(me.result)
 })
+
+
+
+
+
+
+
+
+
+
+
