@@ -8,7 +8,7 @@ test("it should use default config", () => {
     expect(barrel.config.route).toBe('/barrel')
     expect(barrel.config.method).toBe('post')
     expect(barrel.config.middlewares.length).toBe(0)
-    expect(barrel.config.debug).toBe(false)
+    expect(barrel.config.logLevel).toBe('PROD')
 
     expect(barrel.config.bodyParser.toString()).toBe(bodyParser.json().toString())
 })
@@ -18,7 +18,7 @@ test("it should apply given config", () => {
         port: 3000,
         route: '/test',
         method: 'GET',
-        debug: true,
+        logLevel: 'DEBUG',
         bodyParser: bodyParser.urlencoded({ extended: false })
     })
 
@@ -26,7 +26,7 @@ test("it should apply given config", () => {
     expect(barrel.config.route).toBe('/test')
     expect(barrel.config.method).toBe('get')
     expect(barrel.config.middlewares.length).toBe(0)
-    expect(barrel.config.debug).toBe(true)
+    expect(barrel.config.logLevel).toBe('DEBUG')
 
     expect(barrel.config.bodyParser.toString()).toBe(bodyParser.urlencoded({ extended: false }).toString())
 })

@@ -2,11 +2,13 @@ const events = require('events')
 const { JSONPath } = require('jsonpath-plus')
 const JSONFilter = require('@barreljs/json-filter')
 
+const Logger = require('./logger')
+
 class Store {
 
     constructor(config) {
         config = config || {}
-        this.debug = config.debug || false
+        this.logger = config.logger || (new Logger({ logLevel: (config.logLevel || 'PROD') }))
         this.events = []
         this.services = {}
         this.plugins = {}
@@ -15,20 +17,12 @@ class Store {
 
     addEvent (event, callback) {
         // check for existing event, we don't allow duplicate events
-        const exists = this.events.some(listener => {
-            // if event listener don't have same types, it's definitely not a match
-            if (typeof event.pattern !== typeof listener.pattern) return false
-            switch (typeof event.pattern) {
-                case 'string':
-                    return listener.pattern.toLowerCase() === event.pattern.toLowerCase()
-                default:
-                    return JSON.stringify(listener.pattern).toLowerCase() === JSON.stringify(event.pattern).toLowerCase()
-            }
-
-        })
+        const exists = this._hasEvent(this.events, event)
         if (!exists) {
             const trim = (event.trim === false) ? false : true
-            if (this.debug) console.debug('registering event listener in store:', event)
+
+            this.logger.debug('registering event listener in store:', event)
+
             this.events.push({
                 pattern: event.pattern,
                 callback,
@@ -36,8 +30,8 @@ class Store {
             })
 
             this.emitter.addListener(event.pattern, this._eventListener)
-        } else if (this.debug) {
-            console.debug('can\'t add event listener to store, event listener already exists')
+        } else {
+            this.logger.debug('can\'t add event listener to store, event listener already exists')
         }
     }
 
@@ -53,14 +47,15 @@ class Store {
         if (service.actions && !Object.keys(service.actions).length) throw 'Store: service actions needs at least one action'
         if (service.requests && !Object.keys(service.requests).length) throw 'Store: service requests needs at least one request'
 
-        if (this.debug) console.debug(`registering service ${service.name} in store`)
+        this.logger.debug(`registering service ${service.name} in store`)
+
         this.services[service.name] = service
     }
 
     emit (pattern, data) {
         if (this.debug) {
             let debugEvent = typeof pattern === 'string' && pattern || JSON.stringify(pattern)
-            console.debug(`emitting event ${debugEvent}:`, {
+            this.logger.debug(`emitting event ${debugEvent}:`, {
                 message: data.message
             })
         }
@@ -95,7 +90,7 @@ class Store {
         })
 
 
-        if (this.debug) console.debug('returning matching listener:', listeners.length)
+        this.logger.debug('returning matching listener:', listeners.length)
         return listeners
     }
 
@@ -124,10 +119,27 @@ class Store {
         try {
             await callback(opt)
         } catch (err) {
-            if (this.debug) console.error(err)
-            if (context.execution.res) context.execution.res.status(400).send()
-
+            this.logger.debug(err)
+            if (context.execution.res) {
+                return context.execution.res.status(400).send()
+            }
         }
+    }
+
+    _hasEvent (events, event) {
+        return events.some(listener => {
+            // if event listener don't have same types, it's definitely not a match
+            if (typeof event.pattern !== typeof listener.pattern) {
+                return false
+            }
+
+            switch (typeof event.pattern) {
+                case 'string':
+                    return listener.pattern.toLowerCase() === event.pattern.toLowerCase()
+                default:
+                    return JSON.stringify(listener.pattern).toLowerCase() === JSON.stringify(event.pattern).toLowerCase()
+            }
+        })
     }
 
     _toValueObject (values) {

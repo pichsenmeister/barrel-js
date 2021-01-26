@@ -3,6 +3,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const axios = require('axios')
 
+const Logger = require('./logger')
 const Store = require('./store')
 const Request = require('./request')
 
@@ -12,28 +13,32 @@ class Barrel {
 
     constructor(config) {
         config = config || {}
+        const logLevel = (config.logLevel || 'PROD')
+
         this.config = {
             port: config.port || 5000,
             route: config.route || '/barrel',
             method: (config.method || 'POST').toLowerCase(),
             middlewares: config.middlewares || [],
             bodyParser: config.bodyParser || bodyParser.json(),
-            debug: config.debug || false,
+            logLevel: logLevel,
+            logger: (new Logger({ logLevel })),
         }
 
+        this.logger = this.config.logger
         this.app = express()
         this.router = express.Router()
         this.app.use('/', this.router)
 
         this.store = new Store({
-            debug: this.config.debug
+            logger: this.logger
         })
 
         _self = this
     }
 
     on (pattern, callback, trim) {
-        if (this.debug) console.debug('registering request event listener:', pattern)
+        this.logger.debug('registering request event listener:', pattern)
         this.store.addEvent({ pattern, trim }, callback)
     }
 
@@ -83,8 +88,11 @@ class Barrel {
             const serviceId = split[0]
             const service = this.store.getService(serviceId)
             const action = service.actions && service.actions[split[1]]
-            if (action) return await action(...args)
-            else if (this.config.debug) console.debug('No action registered for ', serviceAction)
+            if (action) {
+                return await action(...args)
+            } else {
+                this.logger.debug('No action registered for ', serviceAction)
+            }
         } catch (err) {
             _self._error(err)
         }
@@ -99,7 +107,9 @@ class Barrel {
             if (request) {
                 const result = await axios(new Request(service, request, ...args))
                 return result.data
-            } else if (this.config.debug) console.debug('No request registered for ', serviceRequest)
+            } else {
+                _self.logger.debug('No request registered for ', serviceRequest)
+            }
         } catch (err) {
             _self._error(err.response && err.response.data || err)
         }
@@ -107,17 +117,17 @@ class Barrel {
 
     start (callback) {
         callback = callback || (() => {
-            console.log(`🛢️ Your barrel is running on ${this.config.method.toUpperCase()} <host>:${this.config.port}${this.config.route}`)
+            this.logger.info(`🛢️ Your barrel is running on ${this.config.method.toUpperCase()} <host>:${this.config.port}${this.config.route}`)
         })
 
         this.app.use(this.config.bodyParser)
 
         if (this.config.middlewares.length) {
-            if (this.config.debug) console.debug('registering middlewares:', this.config.middlewares.length)
+            this.logger.debug('registering middlewares:', this.config.middlewares.length)
             this.config.middlewares.forEach(middleware => this.app.use(middleware))
         }
         // spin up route listener
-        if (this.config.debug) console.debug(`spinning up ${this.config.method.toUpperCase()} route: ${this.config.route} `)
+        this.logger.debug(`spinning up ${this.config.method.toUpperCase()} route: ${this.config.route} `)
         this.router[this.config.method](this.config.route, this._router)
 
         this.app.listen(this.config.port, callback)
