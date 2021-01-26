@@ -23,13 +23,3 @@ barrel.start(async () => {
     console.log(me.result)
 })
 
-
-
-
-
-
-
-
-
-
-
