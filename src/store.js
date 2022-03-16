@@ -11,7 +11,6 @@ class Store {
         this.logger = config.logger || (new Logger({ logLevel: (config.logLevel || 'PROD') }))
         this.events = []
         this.services = {}
-        this.plugins = {}
         this.emitter = new events.EventEmitter()
     }
 
@@ -33,12 +32,6 @@ class Store {
         } else {
             this.logger.debug('can\'t add event listener to store, event listener already exists')
         }
-    }
-
-    addPlugin (plugin) {
-        if (!plugin.name) throw 'Plugin: plugin name is required'
-        if (!plugin.functions || !Object.keys(plugin.functions).length) throw 'Plugin: plugin functions needs at least one function'
-        this.plugins[plugin.name] = plugin
     }
 
     addService (service) {
@@ -94,10 +87,6 @@ class Store {
         return listeners
     }
 
-    getPlugin (pluginId) {
-        return this.plugins[pluginId] || false
-    }
-
     getService (serviceId) {
         return this.services[serviceId] || false
     }
@@ -134,6 +123,10 @@ class Store {
             }
 
             switch (typeof event.pattern) {
+                case 'bigint':
+                case 'boolean':
+                case 'number':
+                    return listener.pattern === event.pattern
                 case 'string':
                     return listener.pattern.toLowerCase() === event.pattern.toLowerCase()
                 default:
