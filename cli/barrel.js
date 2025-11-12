@@ -78,9 +78,9 @@ const barrel = new Barrel({ debug: true });
 barrel.register(weatherService);
 
 // Listen for messages with a 'ping' property
-barrel.on({ ping: 'p' }, (msg, context) => {
-  console.log('Received a ping! Responding with pong.');
-  context.res.send({ pong: msg.p });
+barrel.on({ ping: '*' }, ({ message, done }) => {
+  console.log('Received a ping! Responding with pong.', message);
+  done({ pong: message.ping });
 });
 
 // Example scheduled function: Run a sequence of service calls every minute

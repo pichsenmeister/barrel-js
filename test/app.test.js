@@ -139,6 +139,22 @@ describe('Barrel Event System', () => {
 
         expect(callback).toHaveBeenCalledTimes(1)
     })
+
+    test("it should call the global error handler when a listener throws an error", () => {
+        const barrel = new Barrel()
+        const errorCallback = jest.fn()
+        const failingCallback = jest.fn().mockImplementation(() => {
+            throw new Error('Listener failed!');
+        })
+
+        barrel.error(errorCallback)
+        barrel.on({ fail: true }, failingCallback)
+        barrel.dispatch({ fail: true })
+
+        expect(failingCallback).toHaveBeenCalledTimes(1)
+        expect(errorCallback).toHaveBeenCalledTimes(1)
+        expect(errorCallback).toHaveBeenCalledWith(new Error('Listener failed!'))
+    })
 })
 
 describe('Barrel Service Layer', () => {

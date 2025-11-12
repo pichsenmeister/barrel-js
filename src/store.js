@@ -7,9 +7,13 @@ class Store {
     constructor(config) {
         config = config || {}
         this.debug = config.debug || false
+        this.onError = config.onError || (() => {})
         this.events = []
         this.services = {}
         this.emitter = new events.EventEmitter()
+
+        // Bind the event listener context to ensure `this` is available in the emitter callback
+        this._eventListener = this._eventListener.bind(this)
     }
 
     addService (service) {
@@ -118,11 +122,8 @@ class Store {
         try {
             await callback(opt)
         } catch (err) {
-            if (this.debug) console.log(err)
-            // If an HTTP response object exists and we haven't already sent a response, send an error.
-            if (res && !res.headersSent) {
-                res.status(400).send()
-            }
+            // Pass the error to the main error handler
+            this.onError(err, context)
         }
     }
 

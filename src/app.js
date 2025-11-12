@@ -22,7 +22,8 @@ class Barrel {
         this.app = express()
 
         this.store = new Store({
-            debug: this.config.debug
+            debug: this.config.debug,
+            onError: (err, context) => this._error(err, context)
         })
 
         this.scheduledJobs = []
