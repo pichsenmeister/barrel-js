@@ -47,7 +47,7 @@ test("it should call callback fn on emit", () => {
         })
     })
 
-    expect(callback).toBeCalledTimes(1)
+    expect(callback).toHaveBeenCalledTimes(1)
 })
 
 test("it should throw an error if a service is malformed", () => {

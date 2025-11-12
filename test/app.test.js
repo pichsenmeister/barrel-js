@@ -1,129 +1,214 @@
 const Barrel = require("../src/app")
-const bodyParser = require('body-parser')
+const express = require('express')
+const cron = require('node-cron')
 
-test("it should use default config", () => {
-    const barrel = new Barrel()
+// We mock the node-cron library to control its behavior in our tests
+jest.mock('node-cron')
 
-    expect(barrel.config.port).toBe(3141)
-    expect(barrel.config.route).toBe('/barrel')
-    expect(barrel.config.method).toBe('post')
-    expect(barrel.config.middlewares.length).toBe(0)
-    expect(barrel.config.debug).toBe(false)
+describe('Barrel Configuration', () => {
+    test("it should use default config", () => {
+        const barrel = new Barrel()
+        expect(barrel.config.port).toBe(3141)
+        expect(barrel.config.route).toBe('/barrel')
+        expect(barrel.config.method).toBe('post')
+        expect(barrel.config.middlewares.length).toBe(0)
+        expect(barrel.config.debug).toBe(false)
 
-    expect(barrel.config.bodyParser.toString()).toBe(bodyParser.json().toString())
-})
-
-test("it should apply given config", () => {
-    const barrel = new Barrel({
-        port: 1772,
-        route: '/test',
-        method: 'GET',
-        debug: true,
-        bodyParser: bodyParser.urlencoded({ extended: false })
+        expect(barrel.config.bodyParser.toString()).toBe(express.json().toString())
     })
 
-    expect(barrel.config.port).toBe(1772)
-    expect(barrel.config.route).toBe('/test')
-    expect(barrel.config.method).toBe('get')
-    expect(barrel.config.middlewares.length).toBe(0)
-    expect(barrel.config.debug).toBe(true)
+    test("it should apply given config", () => {
+        const barrel = new Barrel({
+            port: 1772,
+            route: '/test',
+            method: 'GET',
+            debug: true,
+            bodyParser: express.urlencoded({ extended: false })
+        })
 
-    expect(barrel.config.bodyParser.toString()).toBe(bodyParser.urlencoded({ extended: false }).toString())
+        expect(barrel.config.port).toBe(1772)
+        expect(barrel.config.route).toBe('/test')
+        expect(barrel.config.method).toBe('get')
+        expect(barrel.config.middlewares.length).toBe(0)
+        expect(barrel.config.debug).toBe(true)
+
+        expect(barrel.config.bodyParser.toString()).toBe(express.urlencoded({ extended: false }).toString())
+    })
 })
 
-test("it should not trigger an event listener if there's none", () => {
-    const barrel = new Barrel()
-    const callback = jest.fn()
+describe('Barrel Event System', () => {
+    test("it should not trigger an event listener if there's none", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
 
-    barrel.dispatch({ test: true })
+        barrel.dispatch({ test: true })
 
-    expect(callback).toBeCalledTimes(0)
-})
-
-test("it should trigger an event listener", () => {
-    const barrel = new Barrel()
-    const callback = jest.fn()
-
-    barrel.on('test', callback)
-
-    barrel.dispatch({ test: true })
-
-    expect(callback).toBeCalledTimes(1)
-})
-
-test("it should listen to an event on an incoming request", () => {
-    const barrel = new Barrel()
-    const callback = jest.fn()
-
-    barrel.on('test', callback)
-
-    barrel._router({
-        body: { test: true }
+        expect(callback).toHaveBeenCalledTimes(0)
     })
 
-    expect(callback).toBeCalledTimes(1)
+    test("it should trigger an event listener", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        barrel.on('test', callback)
+
+        barrel.dispatch({ test: true })
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
+
+    test("it should listen to an event on an incoming request", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        barrel.on('test', callback)
+
+        barrel._router({
+            body: { test: true }
+        })
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
 })
 
-test("it should execute a service action", async () => {
-    const barrel = new Barrel()
-    const callback = jest.fn()
+describe('Barrel Service Layer', () => {
+    test("it should execute a service action", async () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
 
-    const mockService = {
-        name: 'test',
-        actions: {
-            test: callback
-        }
-    }
-
-    barrel.register(mockService)
-    await barrel.act('test.test')
-
-    expect(callback).toBeCalledTimes(1)
-})
-
-test("it should execute a service action with the right arguments", async () => {
-    const barrel = new Barrel()
-    const callback = jest.fn()
-
-    const mockService = {
-        name: 'test',
-        actions: {
-            test: (arg1, arg2, callback) => {
-                expect(arg1).toBe(1)
-                expect(arg2).toBe(2)
-                callback()
+        const mockService = {
+            name: 'test',
+            actions: {
+                test: callback
             }
         }
-    }
 
-    barrel.register(mockService)
-    await barrel.act('test.test', 1, 2, callback)
+        barrel.register(mockService)
+        await barrel.act('test.test')
 
-    expect(callback).toBeCalledTimes(1)
-})
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
 
-test("it should trigger error callback on error", async () => {
-    const barrel = new Barrel()
-    const callback = jest.fn()
+    test("it should execute a service action with the right arguments", async () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
 
-    const mockService = {
-        name: 'test',
-        requests: {
-            test: () => {
-                throw 'exception'
+        const mockService = {
+            name: 'test',
+            actions: {
+                test: ({arg1, arg2, callback}) => {
+                    expect(arg1).toBe(1)
+                    expect(arg2).toBe(2)
+                    callback()
+                }
             }
         }
-    }
 
-    barrel.register(mockService)
-    barrel.error(callback)
+        barrel.register(mockService)
+        await barrel.act('test.test', {arg1: 1, arg2: 2, callback})
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
 
-    await barrel.call('test.test')
+    test("it should trigger error callback on error", async () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
 
-    expect(callback).toBeCalledTimes(1)
+        const mockService = {
+            name: 'test',
+            requests: {
+                test: () => {
+                    throw 'exception'
+                }
+            }
+        }
+
+        barrel.register(mockService)
+        barrel.error(callback)
+
+        await barrel.call('test.test')
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
 })
 
+describe('Barrel Scheduler', () => {
+    let barrel
+    let errorCallback
 
+    beforeEach(() => {
+        // Reset mocks and create a new Barrel instance before each test
+        jest.clearAllMocks()
+        barrel = new Barrel({ debug: false })
+        errorCallback = jest.fn()
+        barrel.error(errorCallback)
+    })
 
+    it('should schedule a task with a valid cron pattern', () => {
+        const task = jest.fn()
+        const cronTime = '* * * * *'
 
+        // Mock cron.validate to return true for this test
+        cron.validate.mockReturnValue(true)
 
+        barrel.schedule(cronTime, task)
+
+        expect(cron.validate).toHaveBeenCalledWith(cronTime)
+        expect(cron.schedule).toHaveBeenCalledTimes(1)
+        expect(cron.schedule).toHaveBeenCalledWith(cronTime, expect.any(Function))
+    })
+
+    it('should not schedule a task with an invalid cron pattern and should call the error handler', () => {
+        const task = jest.fn()
+        const invalidCronTime = 'invalid-pattern'
+
+        // Mock cron.validate to return false
+        cron.validate.mockReturnValue(false)
+
+        barrel.schedule(invalidCronTime, task)
+
+        expect(cron.validate).toHaveBeenCalledWith(invalidCronTime)
+        expect(cron.schedule).not.toHaveBeenCalled()
+        expect(errorCallback).toHaveBeenCalledTimes(1)
+        expect(errorCallback).toHaveBeenCalledWith(new Error(`Invalid cron pattern: ${invalidCronTime}`))
+    })
+
+    it('should execute the scheduled task when the cron job runs', async () => {
+        const task = jest.fn()
+        const cronTime = '* * * * *'
+        cron.validate.mockReturnValue(true)
+
+        barrel.schedule(cronTime, task)
+
+        // cron.schedule is called with a function. We retrieve that function to test it.
+        const scheduledFunction = cron.schedule.mock.calls[0][1]
+        await scheduledFunction()
+
+        expect(task).toHaveBeenCalledTimes(1)
+    })
+
+    it('should catch errors from the executed task and call the error handler', async () => {
+        const error = new Error('Task failed!')
+        const failingTask = jest.fn().mockRejectedValue(error)
+        const cronTime = '* * * * *'
+        cron.validate.mockReturnValue(true)
+
+        barrel.schedule(cronTime, failingTask)
+
+        const scheduledFunction = cron.schedule.mock.calls[0][1]
+        await scheduledFunction()
+
+        expect(failingTask).toHaveBeenCalledTimes(1)
+        expect(errorCallback).toHaveBeenCalledTimes(1)
+        expect(errorCallback).toHaveBeenCalledWith(error)
+    })
+
+    it('should stop all scheduled jobs on server close', () => {
+        const stopJobMock = jest.fn()
+        cron.validate.mockReturnValue(true)
+        cron.schedule.mockReturnValue({ stop: stopJobMock })
+        barrel.schedule('* * * * *', () => { })
+        const server = barrel.start(() => { })
+        server.close()
+        expect(stopJobMock).toHaveBeenCalledTimes(1)
+    })
+})

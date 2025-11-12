@@ -3,6 +3,9 @@
   "version": "0.0.2",
   "description": "Barrel JS is a minimal, event-driven framework for Node to build microservices and integrations.",
   "main": "src/app.js",
+  "bin": {
+    "barrel": "cli/barrel.js"
+  },
   "scripts": {
     "test": "jest test/"
   },
@@ -16,13 +19,14 @@
   "license": "MIT",
   "dependencies": {
     "@barreljs/json-filter": "^0.0.2",
-    "axios": "^0.19.2",
-    "body-parser": "^1.19.0",
-    "express": "^4.17.1",
-    "jsonpath-plus": "^4.0.0"
+    "axios": "^1.6.2",
+    "commander": "^11.1.0",
+    "express": "^4.18.2",
+    "jsonpath-plus": "^10.3.0",
+    "node-cron": "^3.0.3"
   },
   "devDependencies": {
-    "jest": "^26.0.1",
-    "nodemon": "^1.19.4"
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
   }
 }
