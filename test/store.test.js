@@ -26,7 +26,7 @@ test("it should get the correct listener", () => {
     store.addEvent('test', () => { })
     store.addEvent({ test: 'test' }, () => { })
 
-    const listeners = store.getListener({ payload: { test: 'test' } })
+    const listeners = store.getListener({ test: 'test' })
 
     expect(listeners.length).toBe(2)
 })
@@ -36,7 +36,7 @@ test("it should call callback fn on emit", () => {
     const callback = jest.fn()
 
     store.addEvent('test', callback)
-    const listeners = store.getListener({ payload: { test: 'test' } })
+    const listeners = store.getListener('test')
 
     expect(listeners.length).toBe(1)
 

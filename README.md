@@ -39,21 +39,27 @@ This will create a new directory called `my-weather-app`, install the dependenci
 
 ### Messages and Listeners
 
-Barrel is built around messages. You can listen for specific messages using `barrel.on()` with a pattern-matching object.
+Barrel is built around messages. You can listen for specific messages using `barrel.on()` with a pattern. The callback receives a single object which you can destructure to get the `message`, `context`, `values`, and a `done` function.
+
+The pattern can be a simple JSON object, and you can use a `*` as a wildcard to match any value.
 
 ```javascript
 const Barrel = require('@barreljs/core');
 const barrel = new Barrel();
 
-// Listen for any message that has a 'ping' property
-barrel.on({ ping: 'p' }, (msg, context) => {
-	// msg.p contains the value of the 'ping' property
-	console.log(`Received a ping with value: ${msg.p}`);
+// Listen for a message where a user has any role.
+barrel.on({ user: { role: '*' } }, ({ message, values, done }) => {
+	// The 'values' object contains the specific parts of the message that matched the pattern.
+	const matchedRole = values.first(); // e.g., 'admin'
+	console.log(`A user with role "${matchedRole}" just sent a message.`);
 
-	// If the message came from an HTTP request, you can respond
-	if (context.res) {
-		context.res.send({ pong: msg.p });
-	}
+	// The 'done' function sends a response back if the message came from HTTP.
+	done({ status: 'ok', processedRole: matchedRole });
+});
+
+// It's good practice to always have a global error handler.
+barrel.error((err) => {
+	console.error('An error occurred:', err.message);
 });
 
 barrel.start();
@@ -164,6 +170,22 @@ Creates a new Barrel instance.
 #### `barrel.on(pattern, callback)`
 
 Registers a listener that executes the `callback` when an incoming message matches the `pattern`.
+
+The `callback` function receives a single object as an argument, which can be destructured to access the following properties:
+
+-   `message`: The full JSON message object that was dispatched.
+-   `values`: An object containing the matched values from the pattern, with the following helper methods:
+    -   `values.all()`: Returns the full array of matched values.
+    -   `values.first()`: Returns the first matched value, or `false`.
+    -   `values.last()`: Returns the last matched value, or `false`.
+    -   `values.get(index)`: Returns the matched value at a specific index.
+    -   `values.length`: A property containing the number of matches.
+    ```javascript
+    // For a pattern { user: { role: '*' } } and message { user: { role: 'admin' } }
+    // values.first() would return: 'admin'
+    ```
+-   `context`: An object containing execution context. If the message originated from an HTTP request, this will contain `req` and `res` objects from Express.
+-   `done`: A function to send a response back to the client if the message originated from an HTTP request. It's a convenient shorthand for `context.res.send()`.
 
 #### `barrel.register(service)`
 

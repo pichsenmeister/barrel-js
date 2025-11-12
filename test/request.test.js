@@ -63,13 +63,13 @@ test("it should return a request with populated data function", () => {
     const service = {
         name: 'test'
     }
-    const action = (arg1, arg2, arg3) => ({
+    const action = ({ arg1, arg2, arg3 }) => ({
         method: 'post',
         url: 'test',
         data: { arg1: arg1, arg2: arg2, arg3: arg3 }
     })
 
-    const request = new Request(service, action, 1, 2, 3)
+    const request = new Request(service, action, { arg1: 1, arg2: 2, arg3: 3 })
 
     expect(request.data.arg1).toBe(1)
     expect(request.data.arg2).toBe(2)
@@ -215,4 +215,3 @@ test("it should return a request with overwritten basic authorization from reque
         }
     }))
 })
-

@@ -2,8 +2,8 @@ const qs = require('qs');
 
 class Request {
 
-    constructor(service, request, ...args) {
-        const opt = request(...args)
+    constructor(service, request, payload) {
+        const opt = request(payload)
 
         if ((service.urlencoded || opt.urlencoded) && opt.data) opt.data = qs.stringify(opt.data)
 

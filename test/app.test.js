@@ -37,6 +37,14 @@ describe('Barrel Configuration', () => {
 })
 
 describe('Barrel Event System', () => {
+    // This global error handler will catch any unexpected errors from listeners
+    // and fail the test, making debugging much easier.
+    let barrel;
+    beforeEach(() => {
+        barrel = new Barrel();
+        barrel.error(err => { throw err; });
+    });
+
     test("it should not trigger an event listener if there's none", () => {
         const barrel = new Barrel()
         const callback = jest.fn()
@@ -47,7 +55,6 @@ describe('Barrel Event System', () => {
     })
 
     test("it should trigger an event listener", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         barrel.on('test', callback)
@@ -58,7 +65,6 @@ describe('Barrel Event System', () => {
     })
 
     test("it should listen to an event on an incoming request", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         barrel.on('test', callback)
@@ -71,7 +77,6 @@ describe('Barrel Event System', () => {
     })
 
     test("it should trigger a listener with a matching JSON object pattern", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         barrel.on({ user: { role: 'admin' } }, callback)
@@ -81,7 +86,6 @@ describe('Barrel Event System', () => {
     })
 
     test("it should trigger a listener with a JSON object pattern using regex", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         // Match any message containing 'error' case-insensitively
@@ -92,7 +96,6 @@ describe('Barrel Event System', () => {
     })
 
     test("it should trigger a listener with a JSONPath string pattern", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         // Match any message with a 'books' array containing an item with a price less than 10
@@ -108,7 +111,6 @@ describe('Barrel Event System', () => {
     })
 
      test("it should trigger a listener using a wildcard", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         // Match any message
@@ -119,7 +121,6 @@ describe('Barrel Event System', () => {
     })
 
     test("it should trigger a listener with a JSON object pattern using a wildcard for an object", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         // Match any message with a user object
@@ -130,7 +131,6 @@ describe('Barrel Event System', () => {
     })
 
      test("it should trigger a listener with a JSON object pattern using a wildcard for a value", () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         // Match any message with a user object that has any role
@@ -141,7 +141,6 @@ describe('Barrel Event System', () => {
     })
 
     test("it should call the global error handler when a listener throws an error", () => {
-        const barrel = new Barrel()
         const errorCallback = jest.fn()
         const failingCallback = jest.fn().mockImplementation(() => {
             throw new Error('Listener failed!');
@@ -155,11 +154,41 @@ describe('Barrel Event System', () => {
         expect(errorCallback).toHaveBeenCalledTimes(1)
         expect(errorCallback).toHaveBeenCalledWith(new Error('Listener failed!'))
     })
+
+    test("it should provide the matched value for JSON object patterns", () => {
+        const payload = { user: { role: 'admin', name: 'David' } };
+        const callback = jest.fn(({ values }) => {
+            expect(values.first().role).toBe('admin');
+            expect(values.first().name).toBe('David');
+        });
+
+        barrel.on({ role: '*' }, callback);
+        barrel.dispatch(payload);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test("it should provide an the matched value for JSONPath patterns", () => {
+        const payload = { books: [{ title: 'A', price: 20 }, { title: 'B', price: 5 }] };
+        const callback = jest.fn(({ values }) => {
+            expect(values.first()).toEqual(payload.books[1]);
+        });
+
+        barrel.on('$.books[?(@.price < 10)]', callback);
+        barrel.dispatch(payload);
+
+        expect(callback).toHaveBeenCalledTimes(1);
+    });
 })
 
 describe('Barrel Service Layer', () => {
+    let barrel;
+    beforeEach(() => {
+        barrel = new Barrel();
+        barrel.error(err => { throw err; });
+    });
+
     test("it should execute a service action", async () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         const mockService = {
@@ -176,13 +205,12 @@ describe('Barrel Service Layer', () => {
     })
 
     test("it should execute a service action with the right arguments", async () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         const mockService = {
             name: 'test',
             actions: {
-                test: ({arg1, arg2, callback}) => {
+                test: ({ arg1, arg2, callback }) => {
                     expect(arg1).toBe(1)
                     expect(arg2).toBe(2)
                     callback()
@@ -191,12 +219,11 @@ describe('Barrel Service Layer', () => {
         }
 
         barrel.register(mockService)
-        await barrel.act('test.test', {arg1: 1, arg2: 2, callback})
+        await barrel.act('test.test', { arg1: 1, arg2: 2, callback: callback })
         expect(callback).toHaveBeenCalledTimes(1)
     })
 
     test("it should trigger error callback on error", async () => {
-        const barrel = new Barrel()
         const callback = jest.fn()
 
         const mockService = {
