@@ -106,6 +106,28 @@ describe('Barrel Event System', () => {
         })
         expect(callback).toHaveBeenCalledTimes(1)
     })
+
+    test("it should trigger a listener with a JSON object pattern using a wildcard for an object", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        // Match any message with a user object
+        barrel.on({ user: '*' }, callback)
+        barrel.dispatch({ user: { name: 'David', role: 'admin' } })
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
+
+     test("it should trigger a listener with a JSON object pattern using a wildcard for a value", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        // Match any message with a user object that has any role
+        barrel.on({ user: { role: '*' } }, callback)
+        barrel.dispatch({ user: { name: 'David', role: 'admin' } })
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
 })
 
 describe('Barrel Service Layer', () => {

@@ -85,7 +85,8 @@ class Store {
                     }
                     return false
                 default:
-                    const objMatches = JSONFilter(payload, event)
+                    const patternWithWildcards = this._processWildcards(event);
+                    const objMatches = JSONFilter(payload, patternWithWildcards)
                     if (objMatches.length) {
                         listener.values = objMatches
                         return listener
@@ -123,6 +124,28 @@ class Store {
                 res.status(400).send()
             }
         }
+    }
+
+    _processWildcards(pattern) {
+        if (pattern === null || typeof pattern !== 'object') {
+            return pattern;
+        }
+
+        const newPattern = Array.isArray(pattern) ? [] : {};
+
+        for (const key in pattern) {
+            if (Object.prototype.hasOwnProperty.call(pattern, key)) {
+                const value = pattern[key];
+                if (value === '*') {
+                    newPattern[key] = /.*/s; // Match any value, including newlines
+                } else if (typeof value === 'object') {
+                    newPattern[key] = this._processWildcards(value); // Recurse
+                } else {
+                    newPattern[key] = value;
+                }
+            }
+        }
+        return newPattern;
     }
 
     _toValueObject (values) {

@@ -1,6 +1,6 @@
 {
   "name": "@barreljs/core",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Barrel JS is a minimal, event-driven framework for Node to build microservices and integrations.",
   "main": "src/app.js",
   "bin": {
