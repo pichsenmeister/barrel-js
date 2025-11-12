@@ -26,6 +26,9 @@ class Barrel {
         })
 
         this.scheduledJobs = []
+
+        // Bind the router context to ensure `this` is available in the express callback
+        this._router = this._router.bind(this)
     }
 
     on (pattern, callback) {
