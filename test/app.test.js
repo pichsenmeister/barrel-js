@@ -107,6 +107,17 @@ describe('Barrel Event System', () => {
         expect(callback).toHaveBeenCalledTimes(1)
     })
 
+     test("it should trigger a listener using a wildcard", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        // Match any message
+        barrel.on('*', callback)
+        barrel.dispatch({ user: { name: 'David', role: 'admin' } })
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
+
     test("it should trigger a listener with a JSON object pattern using a wildcard for an object", () => {
         const barrel = new Barrel()
         const callback = jest.fn()
