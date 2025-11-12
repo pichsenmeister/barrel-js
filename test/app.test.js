@@ -69,6 +69,43 @@ describe('Barrel Event System', () => {
 
         expect(callback).toHaveBeenCalledTimes(1)
     })
+
+    test("it should trigger a listener with a matching JSON object pattern", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        barrel.on({ user: { role: 'admin' } }, callback)
+        barrel.dispatch({ user: { name: 'David', role: 'admin' }, timestamp: 12345 })
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
+
+    test("it should trigger a listener with a JSON object pattern using regex", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        // Match any message containing 'error' case-insensitively
+        barrel.on({ status: /error/i }, callback)
+        barrel.dispatch({ status: 'FATAL_ERROR', code: 500 })
+
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
+
+    test("it should trigger a listener with a JSONPath string pattern", () => {
+        const barrel = new Barrel()
+        const callback = jest.fn()
+
+        // Match any message with a 'books' array containing an item with a price less than 10
+        barrel.on('$.books[?(@.price < 10)]', callback)
+        barrel.dispatch({
+            store: 'Main St',
+            books: [
+                { title: 'Book A', price: 12.99 },
+                { title: 'Book B', price: 9.99 }
+            ]
+        })
+        expect(callback).toHaveBeenCalledTimes(1)
+    })
 })
 
 describe('Barrel Service Layer', () => {

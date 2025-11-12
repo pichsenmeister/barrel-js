@@ -32,7 +32,7 @@ class Barrel {
     }
 
     on (pattern, callback) {
-        if (this.debug) console.debug('registering request event listener:', pattern)
+        if (this.config.debug) console.debug('registering request event listener:', pattern)
         this.store.addEvent(pattern, callback)
     }
 

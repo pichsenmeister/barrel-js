@@ -104,25 +104,24 @@ class Store {
     }
 
     async _eventListener ({ callback, values, message, context }) {
+        context = context || {}
+        const res = context.execution && context.execution.res;
+
         const opt = {
             message: message || {},
-            context: context || {},
-            values: values
+            context: context,
+            values: values,
+            done: (res && res.send.bind(res)) || (() => {})
         }
-
-        if (opt.context.execution && opt.context.execution.res) {
-            const res = opt.context.execution.res
-            opt.done = res.send.bind(res)
-        } else {
-            opt.done = () => { }
-        }
-
+        
         try {
             await callback(opt)
         } catch (err) {
             if (this.debug) console.log(err)
-            if (context.execution.res) res.status(400).send()
-
+            // If an HTTP response object exists and we haven't already sent a response, send an error.
+            if (res && !res.headersSent) {
+                res.status(400).send()
+            }
         }
     }
 
